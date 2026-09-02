@@ -9,18 +9,6 @@ export type FacetDefinition = {
   maxOptions?: number
 }
 
-const allCategories = [
-  'electrical-wiring',
-  'switches-sockets',
-  'lighting-fans',
-  'circuit-protection',
-  'tools-testers',
-  'electronics-repair',
-  'power-backup',
-  'smart-electrical',
-  'home-solutions',
-] as const
-
 export const facetConfig = [
   { key: 'cable_size_mm2', label: 'Cable size', type: 'number', unit: 'mm²', categorySlugs: ['electrical-wiring'] },
   { key: 'cores', label: 'Number of cores', type: 'number', categorySlugs: ['electrical-wiring'] },
@@ -67,13 +55,12 @@ export const facetConfig = [
   { key: 'app_support', label: 'App support', type: 'boolean', categorySlugs: ['smart-electrical'] },
   { key: 'voice_assistant', label: 'Voice assistant', type: 'text', categorySlugs: ['smart-electrical'] },
   { key: 'required_group', label: 'Solution group', type: 'text', categorySlugs: ['home-solutions'] },
-  { key: 'brand', label: 'Brand', type: 'text', categorySlugs: allCategories },
-  { key: 'stock_status', label: 'Supply status', type: 'text', categorySlugs: allCategories },
-  { key: 'price', label: 'Price', type: 'number', unit: 'BDT', categorySlugs: allCategories },
+  { key: 'brand', label: 'Brand', type: 'text', categorySlugs: navigationCategorySlugs },
+  { key: 'price', label: 'Price', type: 'number', unit: 'BDT', categorySlugs: navigationCategorySlugs },
 ] as const satisfies readonly FacetDefinition[]
 
 export type FacetKey = (typeof facetConfig)[number]['key']
-export type CatalogSort = 'relevance' | 'price_asc' | 'price_desc' | 'newest' | 'trending' | 'stock_first' | 'priority'
+export type CatalogSort = 'relevance' | 'price_asc' | 'price_desc' | 'newest' | 'trending' | 'priority'
 
 export const sortOptions: ReadonlyArray<{ value: CatalogSort; label: string }> = [
   { value: 'relevance', label: 'Recommended' },
@@ -81,7 +68,6 @@ export const sortOptions: ReadonlyArray<{ value: CatalogSort; label: string }> =
   { value: 'price_desc', label: 'Price: high to low' },
   { value: 'newest', label: 'Newest catalogue items' },
   { value: 'trending', label: 'Trending first' },
-  { value: 'stock_first', label: 'Available supply first' },
   { value: 'priority', label: 'Procurement priority' },
 ]
 
@@ -90,3 +76,4 @@ export const sortKeys = new Set<string>(sortOptions.map((option) => option.value
 export const facetsForCategory = (categorySlug?: string) => categorySlug
   ? facetConfig.filter((facet) => facet.categorySlugs.includes(categorySlug as never))
   : facetConfig
+import { navigationCategorySlugs } from '@/lib/catalog/navigation'

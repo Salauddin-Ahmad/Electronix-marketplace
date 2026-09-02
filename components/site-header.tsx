@@ -4,19 +4,8 @@ import Link from 'next/link';
 import { ChevronDown, Menu, Search, ShoppingCart, UserCircle } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { navigationLinks } from '@/lib/catalog/navigation';
 import { useCart } from './cart-provider';
-
-const nav = [
-  ['Electrical & Wiring', '/category/electrical-wiring'],
-  ['Switches & Sockets', '/category/switches-sockets'],
-  ['Lighting & Fans', '/category/lighting-fans'],
-  ['Circuit Protection', '/category/circuit-protection'],
-  ['Tools & Testers', '/category/tools-testers'],
-  ['Electronics & Repair', '/category/electronics-repair'],
-  ['Power & Backup', '/category/power-backup'],
-  ['Smart Electrical', '/category/smart-electrical'],
-  ['Home Solutions', '/category/home-solutions'],
-] as const;
 
 export function SiteHeader() {
   const { count } = useCart();
@@ -67,7 +56,7 @@ export function SiteHeader() {
 
           <nav className={`${mobileOpen ? 'flex' : 'hidden'} flex-col border-t border-slate-200 py-3 md:flex md:flex-row md:items-center md:justify-between md:gap-3 md:overflow-x-auto`}>
             <button type="button" onClick={() => router.push('/search')} className="hidden items-center gap-1 px-1 py-3 text-xs font-bold uppercase tracking-wide text-slate-900 md:inline-flex">All Categories <ChevronDown size={14} /></button>
-            {nav.map(([label, href]) => (
+            {navigationLinks.map(([label, href]) => (
               <Link key={href} href={href} onClick={() => setMobileOpen(false)} className={`whitespace-nowrap border-b-2 px-1 py-3 text-xs font-semibold transition ${pathname.startsWith(href) ? 'border-brand-500 text-brand-600' : 'border-transparent text-slate-600 hover:text-slate-950'}`}>{label}</Link>
             ))}
           </nav>

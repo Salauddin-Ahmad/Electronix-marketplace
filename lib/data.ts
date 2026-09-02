@@ -1,8 +1,9 @@
-export type Priority = 'P1' | 'P2' | 'P3' | 'P4'
-export type StockMode = 'high' | 'medium' | 'low' | 'order'
-export type Product = {
-  id:string; sku:string; name:string; slug:string; category:string; subcategory:string; priority:Priority; stockMode:StockMode; trending:boolean; shortDescription:string; description:string; brand:string|null; brandSuggestions:string[]; specifications:Record<string,string|null>; attributes?:Record<string,string|number|boolean|string[]>; applications:string[]; images:{primary:string|null;gallery:string[];imageSearchQuery:string}; pricing:{currency:'BDT';cost:number|null;sellingPrice:number|null}; availability:{inStock:boolean|null;quantity:number|null;unit:string}; supplier:{supplierId:string|null;supplierName:string|null}; tags:string[]; status:'active'
-}
+import { getNavigationCategory, navigationCategories } from '@/lib/catalog/navigation'
+import { productImage } from '@/lib/catalog/product-images'
+import type { Priority, Product, StockMode } from '@/lib/catalog/types'
+
+export type { Priority, Product, StockMode } from '@/lib/catalog/types'
+export { navigationCategories } from '@/lib/catalog/navigation'
 
 const source: Array<[string,string,string]> = [
 ['House Wiring & Cable','Wire','1.0 sqmm Single Core Copper Wire'],['House Wiring & Cable','Wire','1.5 sqmm Single Core Copper Wire'],['House Wiring & Cable','Wire','2.5 sqmm Single Core Copper Wire'],['House Wiring & Cable','Wire','4 sqmm Single Core Copper Wire'],['House Wiring & Cable','Wire','6 sqmm Single Core Copper Wire'],['House Wiring & Cable','Cable','2 Core Flexible Cable'],['House Wiring & Cable','Cable','3 Core Flexible Cable'],['House Wiring & Cable','Cable','CCTV RG59 Cable'],['House Wiring & Cable','Cable','Cat6 Cable'],['House Wiring & Cable','Cable','Speaker Cable'],['House Wiring & Cable','Accessories','Cable Lug'],['House Wiring & Cable','Accessories','Ferrule'],['House Wiring & Cable','Accessories','Cable Gland'],['House Wiring & Cable','Accessories','Cable Tie'],['House Wiring & Cable','Accessories','Cable Clip'],['House Wiring & Cable','Accessories','Heat Shrink Tube'],['House Wiring & Cable','Accessories','Insulation Tape'],['House Wiring & Cable','Accessories','Terminal Block'],['House Wiring & Cable','Accessories','Wire Connector'],
@@ -29,16 +30,6 @@ const slugify=(s:string)=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^
 const high=/1\.5|2\.5|1\.0|switch|socket|plug|modular plate|fan regulator|fan capacitor|led bulb|led tube|mcb|cable lug|ferrule|cable tie|insulation tape|terminal block|connector/i
 const medium=/fan|multimeter|plier|screwdriver|stripper|crimp|solder|flux|adapter|smps|relay|capacitor|diode|transistor|dc jack|lm2596|xl4015|xl6009|mt3608|tp4056|bms|battery holder/i
 const low=/arduino|nano|esp32|esp8266|sensor|oled|lcd|hc-05|rc522|breadboard|jumper|project box|smart switch|smart plug|cctv|measurement/i
-const productImage=(name:string,index:number)=>{
-  const value=name.toLowerCase()
-  if(/rcbo|rccb/.test(value))return '/products/crops/rcbo-search.png'
-  if(/mcb|distribution board/.test(value))return '/products/crops/mcb-search.png'
-  if(/digital multimeter|clamp meter|voltage tester|usb tester|component tester/.test(value))return '/products/crops/multimeter.png'
-  if(/led bulb/.test(value))return '/products/crops/led-bulb.png'
-  if(/single core copper wire/.test(value))return index%2===0?'/products/crops/wire.png':'/products/crops/wire-coil.png'
-  if(/flexible cable|rg59 cable|cat6 cable|speaker cable/.test(value))return index%2===0?'/products/crops/flex-cable.png':'/products/crops/armored-cable.png'
-  return '/products/dummy-product.svg'
-}
 const inferAttributes=(category:string,subcategory:string,name:string)=>{
   const attributes:Record<string,string|number|boolean|string[]>={}
   const size=name.match(/(\d+(?:\.\d+)?)\s*sqmm/i);if(size)attributes.cable_size_mm2=Number(size[1])
@@ -64,40 +55,102 @@ const inferAttributes=(category:string,subcategory:string,name:string)=>{
   if(category==='Enclosure & Small Hardware'||category==='CCTV & Low-Voltage Accessories'||category==='Electrical Consumables')attributes.required_group=category
   return attributes
 }
-const allProducts:Product[]=source.map(([category,subcategory,name],i)=>{const slug=`${slugify(name)}-${i+1}`;const stockMode:StockMode=high.test(name)?'high':medium.test(name)?'medium':low.test(name)?'low':'order';const priority:Priority=stockMode==='high'?'P1':stockMode==='medium'?'P2':stockMode==='low'?'P3':'P4';return {id:`item-${String(i+1).padStart(3,'0')}`,sku:`VLT-${String(i+1).padStart(4,'0')}`,name,slug,category,subcategory,priority,stockMode,trending:i%17===0,shortDescription:`${name} for ${subcategory.toLowerCase()} applications.`,description:`A catalogue item listed in the FItems source under ${category}. Product specifications, pricing, brand, supplier and quantity are not provided in the source.`,brand:null,brandSuggestions:[],specifications:{},attributes:{...inferAttributes(category,subcategory,name),stock_status:stockMode},applications:[],images:{primary:productImage(name,i),gallery:[],imageSearchQuery:`${name} ${category}`},pricing:{currency:'BDT',cost:null,sellingPrice:null},availability:{inStock:null,quantity:null,unit:'pcs'},supplier:{supplierId:null,supplierName:null},tags:[slugify(name),slugify(category)],status:'active'}})
+// Keep the source order stable: IDs, SKUs and public slugs intentionally derive from it.
+const allProducts: Product[] = source.map(([category, subcategory, name], index) => {
+  const itemNumber = index + 1
+  const slug = `${slugify(name)}-${itemNumber}`
+  const stockMode: StockMode = high.test(name)
+    ? 'high'
+    : medium.test(name)
+      ? 'medium'
+      : low.test(name)
+        ? 'low'
+        : 'order'
+  const priority: Priority = stockMode === 'high'
+    ? 'P1'
+    : stockMode === 'medium'
+      ? 'P2'
+      : stockMode === 'low'
+        ? 'P3'
+        : 'P4'
+
+  return {
+    id: `item-${String(itemNumber).padStart(3, '0')}`,
+    sku: `VLT-${String(itemNumber).padStart(4, '0')}`,
+    name,
+    slug,
+    category,
+    subcategory,
+    priority,
+    stockMode,
+    trending: index % 17 === 0,
+    shortDescription: `${name} for ${subcategory.toLowerCase()} applications.`,
+    description: `A catalogue item listed in the source under ${category}. Product specifications, pricing, brand, supplier and quantity are not provided in the source.`,
+    brand: null,
+    brandSuggestions: [],
+    specifications: {},
+    attributes: inferAttributes(category, subcategory, name),
+    applications: [],
+    images: {
+      primary: productImage(category),
+      gallery: [],
+      imageSearchQuery: `${name} ${category}`,
+    },
+    pricing: { currency: 'BDT', cost: null, sellingPrice: null },
+    availability: { inStock: null, quantity: null, unit: 'pcs' },
+    supplier: { supplierId: null, supplierName: null },
+    tags: [slugify(name), slugify(category)],
+    status: 'active',
+  }
+})
+
+// Launch policy: show half of every source category without removing any category.
 const categoryPositions = new Map<string, number>()
-export const products:Product[]=allProducts.filter((product)=>{const position=categoryPositions.get(product.category)??0;categoryPositions.set(product.category,position+1);return position%2===0})
-export const categories=[...new Set(products.map(p=>p.category))].map(name=>({name,slug:slugify(name),href:`/category/${slugify(name)}`,desc:`Products listed in the ${name} category.`}))
-export const featured=products
-export const data=products
-export const sourceItemCount=source.length
-export const launchProductCount=products.length
-export const validateCatalogue=()=>({count:products.length,uniqueIds:new Set(products.map(p=>p.id)).size===products.length,uniqueSlugs:new Set(products.map(p=>p.slug)).size===products.length,allCategorized:products.every(p=>Boolean(p.category)),allSlugs:products.every(p=>Boolean(p.slug))})
+export const products: Product[] = allProducts.filter((product) => {
+  const position = categoryPositions.get(product.category) ?? 0
+  categoryPositions.set(product.category, position + 1)
+  return position % 2 === 0
+})
+
+export const categories = [...new Set(products.map((product) => product.category))].map((name) => ({
+  name,
+  slug: slugify(name),
+  href: `/category/${slugify(name)}`,
+  desc: `Products listed in the ${name} category.`,
+}))
 export type Category=typeof categories[number]
-export const PRIORITY_ORDER:Priority[]=['P1','P2','P3','P4']
-export const getProduct=(slugOrId:string)=>allProducts.find(p=>p.slug===slugOrId||p.id===slugOrId)
-export const navigationCategories = [
-  { name: 'Electrical & Wiring', slug: 'electrical-wiring', sourceCategories: ['House Wiring & Cable'], desc: 'Wiring, cable and electrical installation essentials.' },
-  { name: 'Switches & Sockets', slug: 'switches-sockets', sourceCategories: ['Switch, Socket & Electrical Accessories'], desc: 'Switches, sockets and everyday electrical accessories.' },
-  { name: 'Lighting & Fans', slug: 'lighting-fans', sourceCategories: ['LED Lighting', 'Fan & Fan Spare Parts'], desc: 'Lighting products, fans and replacement fan parts.' },
-  { name: 'Circuit Protection', slug: 'circuit-protection', sourceCategories: ['MCB, RCCB & Protection'], desc: 'MCBs, RCCBs and protection hardware.' },
-  { name: 'Tools & Testers', slug: 'tools-testers', sourceCategories: ['Hand Tools', 'Multimeter & Test Equipment'], desc: 'Hand tools and electrical test equipment.' },
-  { name: 'Electronics & Repair', slug: 'electronics-repair', sourceCategories: ['Soldering & Repair', 'Basic Electronic Components', 'Relay, Switch & Connector'], desc: 'Repair tools, soldering supplies and components.' },
-  { name: 'Power & Backup', slug: 'power-backup', sourceCategories: ['Plugs, Adapters & Power Supply', 'Battery, Charging & BMS', 'DC-DC Converter Modules'], desc: 'Adapters, power supplies, batteries and charging modules.' },
-  { name: 'Smart Electrical', slug: 'smart-electrical', sourceCategories: ['Smart Home & Automation', 'Arduino / ESP / DIY', 'Breadboard & Prototyping'], desc: 'Smart home, automation and DIY electronics.' },
-  { name: 'Home Solutions', slug: 'home-solutions', sourceCategories: ['Enclosure & Small Hardware', 'CCTV & Low-Voltage Accessories', 'Electrical Consumables'], desc: 'Practical hardware and low-voltage home solutions.' },
-] as const
-export const getCategory=(slug:string)=>navigationCategories.find(c=>c.slug===slug)
-export const productsByNavigationCategory=(slug:string)=>{const category=getCategory(slug);return category?products.filter(p=>category.sourceCategories.includes(p.category as never)):[]}
-export const searchProducts=(query:string)=>{const q=query.trim().toLowerCase();if(!q||q==='all')return products;if(q==='best')return products.filter(p=>p.priority==='P1');return products.filter(p=>[p.name,p.sku,p.category,p.subcategory,...p.tags].join(' ').toLowerCase().includes(q))}
-export const productsByCategory=(category:string)=>products.filter(p=>p.category===category)
-export const relatedProducts=(product:Product)=>products.filter(p=>p.category===product.category&&p.id!==product.id).slice(0,4)
-export const priorityProducts=products.filter(p=>p.priority==='P1')
-export const trendingProducts=products.filter(p=>p.trending)
-export const stockLabel=(mode:StockMode)=>mode==='high'?'High stock':mode==='medium'?'Medium stock':mode==='low'?'Low stock':'Order on request'
-export const categoryOrder=['House Wiring & Cable','Switch, Socket & Electrical Accessories','LED Lighting','Hand Tools','Basic Electronic Components','DC-DC Converter Modules','Battery, Charging & BMS','Arduino / ESP / DIY','CCTV & Low-Voltage Accessories','Smart Home & Automation']
-export const categoryAliases=categories
-export const sourceCategories=categories
-export const getProducts=()=>products
-export const filterProducts=(opts:{query?:string;category?:string;subcategory?:string;priority?:Priority})=>products.filter(p=>(!opts.query||searchProducts(opts.query).some(x=>x.id===p.id))&&(!opts.category||p.category===opts.category)&&(!opts.subcategory||p.subcategory===opts.subcategory)&&(!opts.priority||p.priority===opts.priority))
-export default products
+export const getProduct = (slugOrId: string) => allProducts.find((product) => (
+  product.slug === slugOrId || product.id === slugOrId
+))
+export const getCategory=getNavigationCategory
+
+export const productsByNavigationCategory = (slug: string) => {
+  const category = getCategory(slug)
+  return category
+    ? products.filter((product) => category.sourceCategories.includes(product.category as never))
+    : []
+}
+
+export const searchProducts = (query: string) => {
+  const normalizedQuery = query.trim().toLowerCase()
+  if (!normalizedQuery || normalizedQuery === 'all') return products
+  if (normalizedQuery === 'best') return products.filter((product) => product.priority === 'P1')
+
+  return products.filter((product) => (
+    [product.name, product.sku, product.category, product.subcategory, ...product.tags]
+      .join(' ')
+      .toLowerCase()
+      .includes(normalizedQuery)
+  ))
+}
+
+export const relatedProducts = (product: Product) => products
+  .filter((candidate) => candidate.category === product.category && candidate.id !== product.id)
+  .slice(0, 4)
+
+export const priorityProducts = products.filter((product) => product.priority === 'P1')
+export const trendingProducts = products.filter((product) => product.trending)
+
+export const stockLabel = (mode: StockMode) => mode === 'order'
+  ? 'Order on request'
+  : 'Confirm availability'

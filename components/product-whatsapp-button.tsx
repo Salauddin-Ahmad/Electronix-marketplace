@@ -4,9 +4,9 @@ import { MessageCircle } from 'lucide-react'
 import type { Product } from '@/lib/data'
 import { buildProductWhatsAppUrl } from '@/lib/whatsapp'
 
-export function ProductWhatsAppButton({ product }: { product: Product }) {
+export function ProductWhatsAppButton({ product, quantity = 1 }: { product: Product; quantity?: number }) {
   function openWhatsApp() {
-    const url = buildProductWhatsAppUrl(product, window.location.href)
+    const url = buildProductWhatsAppUrl(product, window.location.href, quantity)
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 

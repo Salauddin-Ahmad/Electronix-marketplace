@@ -1,15 +1,22 @@
 'use client'
 
-const ORIGINAL_SCENE_URL = '/switch-16xnx.html'
+import dynamic from 'next/dynamic'
+
+const LumenCircuitExperience = dynamic(
+  () =>
+    import('./lumen-circuit/experience').then((module) => module.LumenCircuitExperience),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="h-full w-full bg-[#080c13]"
+        role="status"
+        aria-label="Preparing interactive electrical circuit"
+      />
+    ),
+  },
+)
 
 export function CircuitAnimator() {
-  return (
-    <iframe
-      title="Interactive electrical circuit flow"
-      src={ORIGINAL_SCENE_URL}
-      className="h-full w-full border-0"
-      loading="eager"
-      allow="webgl"
-    />
-  )
+  return <LumenCircuitExperience />
 }

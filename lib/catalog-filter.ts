@@ -1,4 +1,4 @@
-import type { Product, StockMode } from '@/lib/data'
+import type { Product } from '@/lib/data'
 import { facetKeys, facetsForCategory, sortKeys, type CatalogSort, type FacetKey } from '@/lib/facet-config'
 
 export type RawCatalogSearchParams = Record<string, string | string[] | undefined>
@@ -37,7 +37,6 @@ export function parseCatalogSearchParams(searchParams: RawCatalogSearchParams): 
 
 function productValues(product: Product, key: FacetKey): string[] {
   if (key === 'brand') return product.brand ? [product.brand] : []
-  if (key === 'stock_status') return [product.stockMode]
   if (key === 'price') return product.pricing.sellingPrice === null ? [] : [String(product.pricing.sellingPrice)]
   const value = product.attributes?.[key]
   if (value === undefined || value === null || value === '') return []
@@ -53,7 +52,6 @@ export function applyProductFilters(products: Product[], params: CatalogParams) 
   }))
 }
 
-const stockOrder: Record<StockMode, number> = { high: 0, medium: 1, low: 2, order: 3 }
 const priorityOrder = { P1: 0, P2: 1, P3: 2, P4: 3 }
 const itemNumber = (product: Product) => Number.parseInt(product.id.replace(/\D/g, ''), 10) || 0
 
@@ -71,7 +69,6 @@ export function sortProducts(products: Product[], sort: CatalogSort) {
   if (sort === 'price_desc') return sorted.sort((a, b) => priceCompare(a, b, -1))
   if (sort === 'newest') return sorted.sort((a, b) => itemNumber(b) - itemNumber(a))
   if (sort === 'trending') return sorted.sort((a, b) => Number(b.trending) - Number(a.trending) || priorityOrder[a.priority] - priorityOrder[b.priority])
-  if (sort === 'stock_first') return sorted.sort((a, b) => stockOrder[a.stockMode] - stockOrder[b.stockMode])
   if (sort === 'priority') return sorted.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
   return sorted
 }
@@ -106,7 +103,6 @@ export function buildAvailableFacets(products: Product[], categorySlug?: string)
 }
 
 function facetOptionLabel(key: FacetKey, value: string) {
-  if (key === 'stock_status') return value === 'high' ? 'High stock' : value === 'medium' ? 'Medium stock' : value === 'low' ? 'Low stock' : 'Order on request'
   if (key === 'app_support') return value === 'true' ? 'Supported' : 'Not specified'
   return value
 }

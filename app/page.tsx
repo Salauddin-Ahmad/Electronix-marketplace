@@ -4,6 +4,7 @@ import { SiteFooter } from '@/components/site-footer'
 import { Showcase } from '@/components/showcase'
 import { navigationCategories, priorityProducts, trendingProducts } from '@/lib/data'
 import { Hero } from '@/components/home/hero'
+import { TrustStrip } from '@/components/home/trust-strip'
 import { ElectricButton } from '@/components/ui/electric-button'
 
 export default function HomePage() {
@@ -12,11 +13,12 @@ export default function HomePage() {
       <SiteHeader />
       <main>
         <Hero />
+        <TrustStrip />
         <section className="container-shell py-12">
           <div className="eyebrow">Practical starting stock</div>
-          <h1 className="font-display mt-2 text-4xl font-bold">
+          <h2 className="font-display mt-2 text-4xl font-bold">
             Electrical essentials, clearly organized.
-          </h1>
+          </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
             Browse the complete catalogue from everyday wiring and lighting to repair parts, power modules and smart home products.
           </p>

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ActiveFilters } from '@/components/catalog/active-filters'
 import { FilterSidebar } from '@/components/catalog/filter-sidebar'
@@ -10,11 +11,18 @@ import { searchProducts } from '@/lib/data'
 
 type Props = { searchParams: Promise<RawCatalogSearchParams> }
 
+export const metadata: Metadata = {
+  title: 'Product Catalogue',
+  description: 'Search and filter the VOLTRONIX electrical product catalogue.',
+}
+
 export default async function SearchPage({ searchParams }: Props) {
   const rawParams = await searchParams
   const rawQuery = rawParams.q
   const q = (Array.isArray(rawQuery) ? rawQuery[0] : rawQuery) ?? ''
-  const showAll = !q.trim() || q.trim().toLowerCase() === 'all'
+  const normalizedQuery = q.trim().toLowerCase()
+  const showAll = !normalizedQuery || normalizedQuery === 'all'
+  const showPriority = normalizedQuery === 'best'
   const extras: Record<string, string> = q ? { q } : {}
   const basePath = '/search'
   const searchResults = searchProducts(q)
@@ -31,7 +39,7 @@ export default async function SearchPage({ searchParams }: Props) {
       <SiteHeader />
       <main className="container-shell py-10">
         <div className="eyebrow">Complete catalogue</div>
-        <h1 className="font-display mt-2 text-4xl font-bold">{showAll ? 'All Products' : `Search results for “${q}”`}</h1>
+        <h1 className="font-display mt-2 text-4xl font-bold">{showAll ? 'All Products' : showPriority ? 'Priority Products' : `Search results for “${q}”`}</h1>
 
         <div className={`mt-7 grid gap-6 ${facets.length ? 'lg:grid-cols-[260px_minmax(0,1fr)]' : ''}`}>
           <FilterSidebar facets={facets} params={catalogParams} basePath={basePath} extras={extras} />

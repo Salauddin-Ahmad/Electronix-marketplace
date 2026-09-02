@@ -11,11 +11,13 @@ export function AddToCartButton({
   className = '',
   compact = false,
   electric = false,
+  quantity = 1,
 }: {
   product: Product
   className?: string
   compact?: boolean
   electric?: boolean
+  quantity?: number
 }) {
   const { add } = useCart()
   const [added, setAdded] = useState(false)
@@ -25,13 +27,14 @@ export function AddToCartButton({
   const feedbackButtonClassName = `${baseClassName} ${electric ? 'min-w-[10.5rem]' : ''} bg-brand-500 focus:outline-none focus-visible:brightness-95`
   const label = product.pricing.sellingPrice === null ? 'Add for quote' : 'Add to cart'
   const iconSize = compact ? 15 : 17
+  const safeQuantity = Number.isFinite(quantity) ? Math.max(1, Math.floor(quantity)) : 1
 
   useEffect(() => () => {
     if (resetTimer.current) clearTimeout(resetTimer.current)
   }, [])
 
   const handleAdd = () => {
-    add(product)
+    add(product, safeQuantity)
     setAdded(true)
     setFeedbackKey((value) => value + 1)
     if (resetTimer.current) clearTimeout(resetTimer.current)
@@ -53,7 +56,7 @@ export function AddToCartButton({
           {added ? 'Added to cart' : label}
         </motion.span>
       </AnimatePresence>
-      <span className="sr-only" aria-live="polite">{added ? `${product.name} added to cart` : ''}</span>
+      <span className="sr-only" aria-live="polite">{added ? `${safeQuantity} ${product.name} added to cart` : ''}</span>
     </>
   )
 
@@ -62,7 +65,7 @@ export function AddToCartButton({
       type="button"
       onClick={handleAdd}
       className={feedbackButtonClassName}
-      aria-label={added ? `${product.name} added to cart` : product.pricing.sellingPrice === null ? `Add ${product.name} for quote` : `Add ${product.name} to cart`}
+      aria-label={added ? `${safeQuantity} ${product.name} added to cart` : product.pricing.sellingPrice === null ? `Add ${safeQuantity} ${product.name} for quote` : `Add ${safeQuantity} ${product.name} to cart`}
       initial={false}
       animate={{ backgroundColor: added ? '#1e3a5f' : '#2563eb' }}
       whileHover={{ y: -1, boxShadow: compact ? '0 5px 12px rgba(15, 35, 65, 0.16)' : '0 7px 16px rgba(15, 35, 65, 0.18)' }}

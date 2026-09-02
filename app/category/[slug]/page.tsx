@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ActiveFilters } from '@/components/catalog/active-filters'
@@ -13,6 +14,15 @@ type Props = { params: Promise<{ slug: string }>; searchParams: Promise<RawCatal
 
 export function generateStaticParams() {
   return navigationCategories.map((category) => ({ slug: category.slug }))
+}
+
+export async function generateMetadata({ params }: Pick<Props, 'params'>): Promise<Metadata> {
+  const { slug } = await params
+  const category = getCategory(slug)
+
+  return category
+    ? { title: category.name, description: category.desc }
+    : { title: 'Category not found' }
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {

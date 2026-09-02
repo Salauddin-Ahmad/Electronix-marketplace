@@ -15,13 +15,21 @@ export function FilterSidebar({
 }) {
   if (!facets.length) return null
   const clearUrl = catalogUrl(basePath, { page: 1, sort: 'relevance', filters: {} }, extras)
+  const activeSelectionCount = Object.values(params.filters).reduce((total, values) => total + (values?.length ?? 0), 0)
 
   return (
     <>
-      <details className="border border-slate-200 bg-white lg:hidden">
+      <details className="group border border-slate-200 bg-white lg:hidden">
         <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-bold text-slate-900">
-          <span className="inline-flex items-center gap-2"><SlidersHorizontal size={17} /> Filter products</span>
-          <span className="text-xs font-semibold text-brand-600">Open</span>
+          <span className="inline-flex items-center gap-2">
+            <SlidersHorizontal size={17} />
+            Filter products
+            {activeSelectionCount > 0 && <span className="grid min-w-5 place-items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] text-brand-600">{activeSelectionCount}</span>}
+          </span>
+          <span className="text-xs font-semibold text-brand-600">
+            <span className="group-open:hidden">Open</span>
+            <span className="hidden group-open:inline">Close</span>
+          </span>
         </summary>
         <div className="border-t border-slate-200 p-4"><FilterForm idPrefix="mobile" facets={facets} params={params} basePath={basePath} extras={extras} clearUrl={clearUrl} /></div>
       </details>
