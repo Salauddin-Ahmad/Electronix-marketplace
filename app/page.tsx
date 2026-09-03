@@ -1,13 +1,25 @@
 import { ArrowRight, BadgeDollarSign, Building2 } from 'lucide-react'
+import Link from 'next/link'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { Showcase } from '@/components/showcase'
-import { navigationCategories, priorityProducts, trendingProducts } from '@/lib/data'
+import { navigationCategories, priorityProducts, products, trendingProducts } from '@/lib/data'
 import { Hero } from '@/components/home/hero'
 import { TrustStrip } from '@/components/home/trust-strip'
 import { ElectricButton } from '@/components/ui/electric-button'
 
 export default function HomePage() {
+  const popularProducts = priorityProducts.slice(0, 8)
+  const popularIds = new Set(popularProducts.map((product) => product.id))
+  const secondaryIds = new Set<string>()
+  const trendingSelection = [...trendingProducts, ...products]
+    .filter((product) => {
+      if (popularIds.has(product.id) || secondaryIds.has(product.id)) return false
+      secondaryIds.add(product.id)
+      return true
+    })
+    .slice(0, 8)
+
   return (
     <div className="min-h-screen bg-[#f8f8f6]">
       <SiteHeader />
@@ -15,22 +27,18 @@ export default function HomePage() {
         <Hero />
         <TrustStrip />
         <section className="container-shell py-12">
-          <div className="eyebrow">Practical starting stock</div>
-          <h2 className="font-display mt-2 text-4xl font-bold">
-            Electrical essentials, clearly organized.
+          <h2 className="text-center font-display text-4xl font-bold text-slate-950 sm:text-[2.75rem]">
+            Shop by Category
           </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-            Browse the complete catalogue from everyday wiring and lighting to repair parts, power modules and smart home products.
-          </p>
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {navigationCategories.slice(0, 9).map((category) => (
-              <a key={category.slug} href={`/category/${category.slug}`} className="group flex items-center justify-between border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-brand-500 hover:text-brand-600 hover:shadow-sm">
+              <Link key={category.slug} href={`/category/${category.slug}`} className="group flex items-center justify-between border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-brand-500 hover:text-brand-600 hover:shadow-sm">
                 {category.name}<ArrowRight size={15} className="text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-brand-500" aria-hidden="true" />
-              </a>
+              </Link>
             ))}
           </div>
-          <Showcase title="Most Popular / P1" items={priorityProducts.slice(0, 8)} />
-          <Showcase title="Trending" items={trendingProducts.slice(0, 8)} />
+          <Showcase title="Most Popular" items={popularProducts} />
+          <Showcase title="Trending Now" items={trendingSelection} />
           <section className="mt-12 grid gap-4 border-t border-slate-200 pt-8 lg:grid-cols-2" aria-label="Project and pricing support">
             <article className="flex flex-col justify-between gap-5 border border-slate-200 bg-white p-6 sm:flex-row sm:items-center">
               <div className="flex gap-4">

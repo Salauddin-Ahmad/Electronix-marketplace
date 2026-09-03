@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ChevronDown, Menu, Search, ShoppingCart, UserCircle } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { BrandLogo } from '@/components/brand-logo';
 import { navigationLinks } from '@/lib/catalog/navigation';
 import { useCart } from './cart-provider';
 
@@ -13,10 +14,22 @@ export function SiteHeader() {
   const router = useRouter();
   const [q, setQ] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [navHover, setNavHover] = useState({ left: 0, width: 0, visible: false });
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (q.trim()) router.push(`/search?q=${encodeURIComponent(q.trim())}`);
+  };
+
+  const positionNavHover = (event: React.PointerEvent<HTMLElement>) => {
+    const item = event.currentTarget;
+    const left = item.offsetLeft;
+    const width = item.offsetWidth;
+    setNavHover((current) => (
+      current.left === left && current.width === width && current.visible
+        ? current
+        : { left, width, visible: true }
+    ));
   };
 
   return (
@@ -31,7 +44,7 @@ export function SiteHeader() {
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-[#fcfcfa]/95 backdrop-blur">
         <div className="container-shell">
           <div className="flex h-[76px] items-center gap-5">
-            <Link href="/" className="shrink-0 font-display text-[27px] font-extrabold tracking-tight text-[#1b2026]">VOLTRONIX<span className="text-brand-500">.</span></Link>
+            <BrandLogo />
 
             <form onSubmit={submit} className="hidden min-w-0 flex-1 md:flex">
               <div className="relative w-full max-w-3xl mx-auto">
@@ -53,13 +66,25 @@ export function SiteHeader() {
               <input value={q} onChange={(e) => setQ(e.target.value)} className="h-11 w-full border border-slate-200 bg-[#f2f3f1] pl-10 pr-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-blue-100" placeholder="Search products or part number..." aria-label="Search products" />
             </div>
           </form>
+        </div>
 
-          <nav className={`${mobileOpen ? 'flex' : 'hidden'} flex-col border-t border-slate-200 py-3 md:flex md:flex-row md:items-center md:justify-between md:gap-3 md:overflow-x-auto`}>
-            <button type="button" onClick={() => router.push('/search')} className="hidden items-center gap-1 px-1 py-3 text-xs font-bold uppercase tracking-wide text-slate-900 md:inline-flex">All Categories <ChevronDown size={14} /></button>
-            {navigationLinks.map(([label, href]) => (
-              <Link key={href} href={href} onClick={() => setMobileOpen(false)} className={`whitespace-nowrap border-b-2 px-1 py-3 text-xs font-semibold transition ${pathname.startsWith(href) ? 'border-brand-500 text-brand-600' : 'border-transparent text-slate-600 hover:text-slate-950'}`}>{label}</Link>
-            ))}
-          </nav>
+        <div className={`${mobileOpen ? 'block' : 'hidden'} border-y border-[#25344d] bg-[#172033] md:block`}>
+          <div className="container-shell">
+            <nav
+              onPointerLeave={() => setNavHover((current) => ({ ...current, visible: false }))}
+              className="scrollbar-none relative flex flex-col py-2 md:flex-row md:items-center md:justify-between md:gap-2 md:overflow-x-auto md:py-1"
+            >
+              <span
+                aria-hidden="true"
+                style={{ width: navHover.width, transform: `translateX(${navHover.left}px)`, opacity: navHover.visible ? 1 : 0 }}
+                className="pointer-events-none absolute inset-y-1 left-0 z-0 hidden border border-white/10 bg-white/[0.08] shadow-[0_5px_16px_rgba(2,6,23,0.18)] transition-[width,transform,opacity] duration-300 ease-out md:block"
+              />
+              <button type="button" onPointerMove={positionNavHover} onClick={() => router.push('/search')} className="relative z-10 hidden shrink-0 items-center gap-1 px-2 py-3 text-xs font-extrabold uppercase tracking-wide text-blue-300 transition-colors hover:text-white md:inline-flex xl:text-[13px]">All Categories <ChevronDown size={14} /></button>
+              {navigationLinks.map(([label, href]) => (
+                <Link key={href} href={href} onPointerMove={positionNavHover} onClick={() => setMobileOpen(false)} className={`relative z-10 shrink-0 whitespace-nowrap border-b-2 px-2 py-3 text-[13px] font-bold transition-colors md:text-xs xl:text-[13px] ${pathname.startsWith(href) ? 'border-blue-400 text-white' : 'border-transparent text-slate-300 hover:bg-white/10 hover:text-white md:hover:bg-transparent'}`}>{label}</Link>
+              ))}
+            </nav>
+          </div>
         </div>
       </header>
     </>

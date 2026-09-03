@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-import { products, type Product } from '@/lib/data'
+import type { Product } from '@/lib/data'
 import { ProductGrid } from '@/components/product-card'
 
 type ShowcaseProps = {
@@ -10,12 +10,14 @@ type ShowcaseProps = {
 }
 
 export function Showcase({ title, items, href }: ShowcaseProps) {
+  const headingId = `showcase-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+
   return (
-    <section className="mt-12 border-t border-slate-200 pt-8" aria-labelledby={`showcase-${title}`}>
+    <section className="mt-12 border-t border-slate-200 pt-8" aria-labelledby={headingId}>
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
           <div className="eyebrow">Catalogue</div>
-          <h2 id={`showcase-${title}`} className="font-display mt-1 text-3xl font-bold text-slate-900">
+          <h2 id={headingId} className="font-display mt-1 text-3xl font-bold text-slate-900">
             {title}
           </h2>
         </div>
@@ -35,5 +37,3 @@ export function Showcase({ title, items, href }: ShowcaseProps) {
     </section>
   )
 }
-
-export type ShowcaseItems = typeof products

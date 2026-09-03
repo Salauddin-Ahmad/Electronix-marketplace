@@ -13,8 +13,8 @@ export function ProductPurchaseActions({ product }: { product: Product }) {
   const quantityLabel = product.pricing.sellingPrice === null ? 'Quantity needed' : 'Quantity'
 
   return (
-    <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
-      <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+    <div className="flex w-full flex-col gap-4">
+      <div className="flex w-full items-center justify-between gap-3 sm:justify-start">
         <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{quantityLabel}</span>
         <div className="inline-flex items-center border border-slate-300 bg-white" role="group" aria-label={`${product.name} quantity`}>
           <button
