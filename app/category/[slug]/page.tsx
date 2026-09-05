@@ -9,6 +9,7 @@ import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { applyProductFilters, buildAvailableFacets, catalogUrl, paginateProducts, parseCatalogSearchParams, sortProducts, type RawCatalogSearchParams } from '@/lib/catalog-filter'
 import { getCategory, navigationCategories, productsByNavigationCategory } from '@/lib/data'
+import { absoluteUrl, canonicalMetadata } from '@/lib/seo'
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<RawCatalogSearchParams> }
 
@@ -21,7 +22,16 @@ export async function generateMetadata({ params }: Pick<Props, 'params'>): Promi
   const category = getCategory(slug)
 
   return category
-    ? { title: category.name, description: category.desc }
+    ? {
+      title: category.name,
+      description: category.desc,
+      ...canonicalMetadata(`/category/${category.slug}`),
+      openGraph: {
+        title: `${category.name} | VOLTRONIX`,
+        description: category.desc,
+        url: absoluteUrl(`/category/${category.slug}`),
+      },
+    }
     : { title: 'Category not found' }
 }
 
@@ -44,7 +54,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   return (
     <div>
       <SiteHeader />
-      <main className="container-shell py-10">
+      <main id="main-content" className="container-shell py-10">
         <Link href="/" className="text-xs text-slate-500">Home / Categories</Link>
         <div className="mt-6 border-b border-slate-200 pb-6">
           <div className="eyebrow">Category</div>

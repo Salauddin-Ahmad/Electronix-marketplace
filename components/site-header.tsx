@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronDown, Menu, Search, ShoppingCart, UserCircle } from 'lucide-react';
+import { Menu, Search, ShoppingCart } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { BrandLogo } from '@/components/brand-logo';
 import { navigationLinks } from '@/lib/catalog/navigation';
+import { buildGeneralWhatsAppUrl } from '@/lib/whatsapp';
 import { useCart } from './cart-provider';
 
 export function SiteHeader() {
@@ -18,10 +19,12 @@ export function SiteHeader() {
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (q.trim()) router.push(`/search?q=${encodeURIComponent(q.trim())}`);
+    const query = q.trim();
+    router.push(query ? `/search?q=${encodeURIComponent(query)}` : '/search');
+    setMobileOpen(false);
   };
 
-  const positionNavHover = (event: React.PointerEvent<HTMLElement>) => {
+  const positionNavHover = (event: React.SyntheticEvent<HTMLElement>) => {
     const item = event.currentTarget;
     const left = item.offsetLeft;
     const width = item.offsetWidth;
@@ -37,7 +40,7 @@ export function SiteHeader() {
       <div className="bg-[#161a20] text-white">
         <div className="container-shell flex min-h-8 items-center justify-between gap-4 text-[11px] text-slate-300">
           <div className="flex gap-5"><span>Nationwide Delivery</span><span className="hidden sm:block">Bulk & Wholesale Orders</span></div>
-          <div className="flex gap-5"><Link href="/price-challenge" className="font-semibold text-blue-300 hover:text-white">Price Challenge</Link><span>Help & Support</span></div>
+          <div className="flex gap-5"><Link href="/price-challenge" className="font-semibold text-blue-300 hover:text-white">Price Challenge</Link><a href={buildGeneralWhatsAppUrl()} target="_blank" rel="noopener noreferrer" className="transition hover:text-white">Help &amp; Support</a></div>
         </div>
       </div>
 
@@ -54,9 +57,8 @@ export function SiteHeader() {
             </form>
 
             <div className="ml-auto flex items-center gap-1">
-              <Link href="/account" aria-label="Account" className="icon-btn"><UserCircle size={20} /></Link>
-              <Link href="/cart" aria-label="Cart" className="icon-btn relative"><ShoppingCart size={20} />{count > 0 && <span className="absolute -right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-brand-500 px-1 text-[9px] font-extrabold text-white">{count}</span>}</Link>
-              <button type="button" onClick={() => setMobileOpen((value) => !value)} className="icon-btn md:hidden" aria-label="Toggle navigation"><Menu size={21} /></button>
+              <Link href="/cart" aria-label="Quote list" className="icon-btn relative"><ShoppingCart size={20} />{count > 0 && <span className="absolute -right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-brand-500 px-1 text-[9px] font-extrabold text-white">{count}</span>}</Link>
+              <button type="button" onClick={() => setMobileOpen((value) => !value)} className="icon-btn md:hidden" aria-label="Toggle navigation" aria-expanded={mobileOpen} aria-controls="primary-navigation"><Menu size={21} /></button>
             </div>
           </div>
 
@@ -71,6 +73,7 @@ export function SiteHeader() {
         <div className={`${mobileOpen ? 'block' : 'hidden'} border-y border-[#25344d] bg-[#172033] md:block`}>
           <div className="container-shell">
             <nav
+              id="primary-navigation"
               onPointerLeave={() => setNavHover((current) => ({ ...current, visible: false }))}
               className="scrollbar-none relative flex flex-col py-2 md:flex-row md:items-center md:justify-between md:gap-2 md:overflow-x-auto md:py-1"
             >
@@ -79,9 +82,9 @@ export function SiteHeader() {
                 style={{ width: navHover.width, transform: `translateX(${navHover.left}px)`, opacity: navHover.visible ? 1 : 0 }}
                 className="pointer-events-none absolute inset-y-1 left-0 z-0 hidden border border-white/10 bg-white/[0.08] shadow-[0_5px_16px_rgba(2,6,23,0.18)] transition-[width,transform,opacity] duration-300 ease-out md:block"
               />
-              <button type="button" onPointerMove={positionNavHover} onClick={() => router.push('/search')} className="relative z-10 hidden shrink-0 items-center gap-1 px-2 py-3 text-xs font-extrabold uppercase tracking-wide text-blue-300 transition-colors hover:text-white md:inline-flex xl:text-[13px]">All Categories <ChevronDown size={14} /></button>
+              <button type="button" onPointerMove={positionNavHover} onFocus={positionNavHover} onClick={() => router.push('/search')} className="relative z-10 hidden shrink-0 items-center gap-1 px-2 py-3 text-xs font-extrabold uppercase tracking-wide text-blue-300 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#172033] md:inline-flex xl:text-[13px]">All Products</button>
               {navigationLinks.map(([label, href]) => (
-                <Link key={href} href={href} onPointerMove={positionNavHover} onClick={() => setMobileOpen(false)} className={`relative z-10 shrink-0 whitespace-nowrap border-b-2 px-2 py-3 text-[13px] font-bold transition-colors md:text-xs xl:text-[13px] ${pathname.startsWith(href) ? 'border-blue-400 text-white' : 'border-transparent text-slate-300 hover:bg-white/10 hover:text-white md:hover:bg-transparent'}`}>{label}</Link>
+                <Link key={href} href={href} onPointerMove={positionNavHover} onFocus={positionNavHover} onClick={() => setMobileOpen(false)} aria-current={pathname.startsWith(href) ? 'page' : undefined} className={`relative z-10 shrink-0 whitespace-nowrap border-b-2 px-2 py-3 text-[13px] font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#172033] md:text-xs xl:text-[13px] ${pathname.startsWith(href) ? 'border-blue-400 text-white' : 'border-transparent text-slate-300 hover:bg-white/10 hover:text-white md:hover:bg-transparent'}`}>{label}</Link>
               ))}
             </nav>
           </div>

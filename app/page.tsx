@@ -23,7 +23,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#f8f8f6]">
       <SiteHeader />
-      <main>
+      <main id="main-content">
         <Hero />
         <TrustStrip />
         <section className="container-shell py-12">

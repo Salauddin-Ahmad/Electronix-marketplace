@@ -1,20 +1,26 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { getProduct, type Product } from '@/lib/data';
+import type { LegacyProduct } from '@/lib/adapters/legacy-product-adapter';
+import { getLegacyProductForSkuId, getLegacySkuIdForProductId, legacyProductToSkuId } from '@/lib/adapters/legacy-product-adapter';
+import { cartService } from '@/lib/services';
 
 const CART_STORAGE_KEY = 'voltronix-cart';
-const CART_STORAGE_VERSION = 1;
+const CART_STORAGE_VERSION = 2;
 const MAX_CART_QUANTITY = 99;
 
-export type CartLine = { product: Product; qty: number };
-type StoredCart = {
+export type CartLine = { product: LegacyProduct; qty: number; skuId: string };
+type StoredCartV1 = {
+  version: 1;
+  items: Array<{ productId: string; qty?: number }>;
+};
+type StoredCartV2 = {
   version: typeof CART_STORAGE_VERSION;
-  items: Array<{ productId: string; qty: number }>;
+  items: Array<{ skuId: string; quantity: number }>;
 };
 type CartContextType = {
   items: CartLine[];
-  add: (product: Product, qty?: number) => void;
+  add: (product: LegacyProduct, qty?: number) => void;
   setQty: (id: string, qty: number) => void;
   remove: (id: string) => void;
   count: number;
@@ -30,24 +36,42 @@ function safeQuantity(value: unknown) {
   return Math.min(MAX_CART_QUANTITY, Math.max(1, Math.floor(value)));
 }
 
-function restoreCart(): CartLine[] {
+function readStoredCartItems(stored: unknown): Array<{ skuId: string; quantity: number }> {
+  if (!stored || typeof stored !== 'object' || !('version' in stored) || !('items' in stored) || !Array.isArray(stored.items)) return [];
+
+  const quantities = new Map<string, number>();
+  const add = (skuId: string, quantity: unknown) => {
+    const normalizedSkuId = skuId.trim();
+    if (!normalizedSkuId) return;
+    quantities.set(normalizedSkuId, safeQuantity((quantities.get(normalizedSkuId) ?? 0) + safeQuantity(quantity)));
+  };
+
+  if (stored.version === CART_STORAGE_VERSION) {
+    for (const line of (stored as StoredCartV2).items) {
+      if (!line || typeof line.skuId !== 'string') continue;
+      add(line.skuId, line.quantity);
+    }
+  } else if (stored.version === 1) {
+    for (const line of (stored as StoredCartV1).items) {
+      if (!line || typeof line.productId !== 'string') continue;
+      const skuId = getLegacySkuIdForProductId(line.productId);
+      if (skuId) add(skuId, line.qty);
+    }
+  }
+
+  return [...quantities.entries()].map(([skuId, quantity]) => ({ skuId, quantity }));
+}
+
+async function restoreCart(): Promise<CartLine[]> {
   try {
     const raw = window.localStorage.getItem(CART_STORAGE_KEY);
     if (!raw) return [];
     const stored: unknown = JSON.parse(raw);
-    if (!stored || typeof stored !== 'object' || !('version' in stored) || !('items' in stored)) return [];
-    if (stored.version !== CART_STORAGE_VERSION || !Array.isArray(stored.items)) return [];
+    const resolvedLines = await cartService.resolveLines(readStoredCartItems(stored));
 
-    const quantities = new Map<string, number>();
-    for (const line of stored.items) {
-      if (!line || typeof line !== 'object' || !('productId' in line) || typeof line.productId !== 'string') continue;
-      const qty = 'qty' in line ? safeQuantity(line.qty) : 1;
-      quantities.set(line.productId, safeQuantity((quantities.get(line.productId) ?? 0) + qty));
-    }
-
-    return [...quantities.entries()].flatMap(([productId, qty]) => {
-      const product = getProduct(productId);
-      return product ? [{ product, qty }] : [];
+    return resolvedLines.flatMap(({ sku, quantity }) => {
+      const product = getLegacyProductForSkuId(sku.id);
+      return product ? [{ product, qty: quantity, skuId: sku.id }] : [];
     });
   } catch {
     return [];
@@ -59,15 +83,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    setItems(restoreCart());
-    setIsHydrated(true);
+    let isCurrent = true;
+    void restoreCart().then((restoredItems) => {
+      if (!isCurrent) return;
+      setItems(restoredItems);
+      setIsHydrated(true);
+    });
+
+    return () => {
+      isCurrent = false;
+    };
   }, []);
 
   useEffect(() => {
     if (!isHydrated) return;
-    const stored: StoredCart = {
+    const stored: StoredCartV2 = {
       version: CART_STORAGE_VERSION,
-      items: items.map(({ product, qty }) => ({ productId: product.id, qty })),
+      items: items.map(({ skuId, qty }) => ({ skuId, quantity: qty })),
     };
     try {
       window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(stored));
@@ -76,15 +108,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isHydrated, items]);
 
-  const add = (product: Product, qty = 1) => setItems((current) => {
+  const add = (product: LegacyProduct, qty = 1) => setItems((current) => {
     const quantityToAdd = safeQuantity(qty);
-    const found = current.find((item) => item.product.id === product.id);
-    if (found) return current.map((item) => item.product.id === product.id ? { ...item, qty: safeQuantity(item.qty + quantityToAdd) } : item);
-    return [...current, { product, qty: quantityToAdd }];
+    const skuId = legacyProductToSkuId(product);
+    const found = current.find((item) => item.skuId === skuId);
+    if (found) return current.map((item) => item.skuId === skuId ? { ...item, qty: safeQuantity(item.qty + quantityToAdd) } : item);
+    return [...current, { product, qty: quantityToAdd, skuId }];
   });
 
-  const setQty = (id: string, qty: number) => setItems((current) => current.map((item) => item.product.id === id ? { ...item, qty: safeQuantity(qty) } : item));
-  const remove = (id: string) => setItems((current) => current.filter((item) => item.product.id !== id));
+  const lineMatches = (item: CartLine, id: string) => item.skuId === id || item.product.id === id;
+  const setQty = (id: string, qty: number) => setItems((current) => current.map((item) => lineMatches(item, id) ? { ...item, qty: safeQuantity(qty) } : item));
+  const remove = (id: string) => setItems((current) => current.filter((item) => !lineMatches(item, id)));
   const clear = () => setItems([]);
 
   const value = useMemo(() => ({

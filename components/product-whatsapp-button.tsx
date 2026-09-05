@@ -1,7 +1,7 @@
 'use client'
 
 import { MessageCircle } from 'lucide-react'
-import type { Product } from '@/lib/data'
+import type { Product } from '@/lib/catalog/types'
 import { buildProductWhatsAppUrl } from '@/lib/whatsapp'
 
 export function ProductWhatsAppButton({ product, quantity = 1 }: { product: Product; quantity?: number }) {

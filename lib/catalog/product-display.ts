@@ -1,4 +1,4 @@
-import type { Product } from '@/lib/data'
+import type { Product, StockMode } from '@/lib/catalog/types'
 
 export type ProductFact = {
   label: string
@@ -84,4 +84,8 @@ export function getAvailabilityText(product: Product) {
   if (product.availability.inStock === true) return 'Listed as available — confirm current stock'
   if (product.availability.inStock === false) return 'Currently unavailable — ask about restocking'
   return 'Availability requires confirmation'
+}
+
+export function stockLabel(mode: StockMode) {
+  return mode === 'order' ? 'Order on request' : 'Confirm availability'
 }

@@ -9,7 +9,7 @@ import { formatBDT } from '@/lib/currency'
 import { buildCartWhatsAppUrl } from '@/lib/whatsapp'
 
 export default function CartPage() {
-  const { items, subtotal, setQty, remove, isHydrated } = useCart()
+  const { items, subtotal, setQty, remove, clear, isHydrated } = useCart()
   const pricedLineCount = items.filter(({ product }) => product.pricing.sellingPrice !== null).length
   const quoteLineCount = items.length - pricedLineCount
   const whatsAppUrl = isHydrated && items.length ? buildCartWhatsAppUrl(items) : undefined
@@ -19,21 +19,21 @@ export default function CartPage() {
       <header className="border-b border-line bg-white">
         <div className="container-shell flex h-20 items-center justify-between">
           <Link href="/" className="font-display text-3xl font-extrabold text-brand-500">VOLTRONIX</Link>
-          <div className="inline-flex items-center gap-2 text-xs font-semibold sm:text-sm"><LockKeyhole size={16} /> Frontend quote cart</div>
+          <div className="inline-flex items-center gap-2 text-xs font-semibold sm:text-sm"><LockKeyhole size={16} /> Quote list · no order is placed</div>
         </div>
       </header>
       <main className="container-shell py-10">
         <div className="grid gap-8 lg:grid-cols-[1.15fr_.65fr]">
           <section>
-            <h1 className="font-display text-4xl font-bold">Your Cart</h1>
+            <h1 className="font-display text-4xl font-bold">Your Quote List</h1>
             {!isHydrated ? (
               <div className="mt-8 border border-line bg-white p-10 text-center" role="status">
-                <p className="text-sm font-semibold text-slate-600">Restoring your cart…</p>
+                <p className="text-sm font-semibold text-slate-600">Restoring your quote list…</p>
               </div>
             ) : !items.length ? (
               <div className="mt-8 border border-line bg-white p-10 text-center">
-                <h2 className="font-display text-2xl font-bold">Your cart is empty</h2>
-                <p className="mt-2 text-sm text-[#666b65]">Browse products and add what you need.</p>
+                <h2 className="font-display text-2xl font-bold">Your quote list is empty</h2>
+                <p className="mt-2 text-sm text-[#666b65]">Browse products and add the items you want us to quote.</p>
                 <Link href="/search" className="mt-5 inline-flex bg-brand-500 px-5 py-3 font-bold text-white transition hover:bg-brand-600">Continue shopping</Link>
               </div>
             ) : (
@@ -67,7 +67,7 @@ export default function CartPage() {
             )}
           </section>
           <aside className="h-fit border border-line bg-white p-6">
-            <h2 className="font-display text-2xl font-bold">Cart Summary</h2>
+            <h2 className="font-display text-2xl font-bold">Quote Summary</h2>
             <div className="my-5 border-t border-line" />
             <div className="space-y-3 text-sm">
               <div className="flex justify-between gap-3"><span>Priced items subtotal</span><span>{!isHydrated ? 'Loading…' : pricedLineCount ? formatBDT(subtotal) : 'Request price'}</span></div>
@@ -75,7 +75,7 @@ export default function CartPage() {
               <div className="flex justify-between"><span>Delivery</span><span>To be confirmed</span></div>
             </div>
             <div className="my-5 border-t border-line" />
-            <div className="flex justify-between gap-3 font-display text-xl font-bold"><span>Current subtotal</span><span>{!isHydrated ? 'Loading…' : pricedLineCount ? formatBDT(subtotal) : 'Quote required'}</span></div>
+            <div className="flex justify-between gap-3 font-display text-xl font-bold"><span>Shown subtotal</span><span>{!isHydrated ? 'Loading…' : pricedLineCount ? formatBDT(subtotal) : 'Quote required'}</span></div>
             <a
               href={whatsAppUrl}
               target="_blank"
@@ -85,8 +85,9 @@ export default function CartPage() {
             >
               <MessageCircle size={18} aria-hidden="true" /> Send quote request on WhatsApp
             </a>
-            <Link href="/checkout" className={`mt-3 inline-flex w-full items-center justify-center gap-2 border border-slate-300 px-4 py-3 text-center font-bold text-slate-700 transition hover:border-brand-500 hover:text-brand-600 ${!isHydrated || !items.length ? 'pointer-events-none opacity-50' : ''}`}>Review frontend checkout <ArrowRight size={18} /></Link>
-            <div className="mt-5 border border-line bg-panel p-4 text-xs leading-5"><b>Quotation preview only.</b><br />WhatsApp opens a pre-filled request. It does not place an order, reserve stock or submit payment.</div>
+            <Link href="/checkout" className={`mt-3 inline-flex w-full items-center justify-center gap-2 border border-slate-300 px-4 py-3 text-center font-bold text-slate-700 transition hover:border-brand-500 hover:text-brand-600 ${!isHydrated || !items.length ? 'pointer-events-none opacity-50' : ''}`}>Add request details <ArrowRight size={18} /></Link>
+            {isHydrated && items.length > 0 && <button type="button" onClick={clear} className="mt-3 w-full px-4 py-2 text-sm font-semibold text-slate-500 transition hover:text-red-700">Clear quote list</button>}
+            <div className="mt-3 border border-line bg-panel p-4 text-xs leading-5"><b>Quotation preview only.</b><br />WhatsApp opens a pre-filled request. It does not place an order, reserve stock or submit payment.</div>
           </aside>
         </div>
       </main>

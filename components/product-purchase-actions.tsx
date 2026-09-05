@@ -4,7 +4,7 @@ import { Minus, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { AddToCartButton } from '@/components/add-to-cart-button'
 import { ProductWhatsAppButton } from '@/components/product-whatsapp-button'
-import type { Product } from '@/lib/data'
+import type { Product } from '@/lib/catalog/types'
 
 const MAX_QUANTITY = 99
 

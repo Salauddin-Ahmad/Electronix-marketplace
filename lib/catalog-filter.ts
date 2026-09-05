@@ -1,4 +1,4 @@
-import type { Product } from '@/lib/data'
+import type { Product } from '@/lib/catalog/types'
 import { facetKeys, facetsForCategory, sortKeys, type CatalogSort, type FacetKey } from '@/lib/facet-config'
 
 export type RawCatalogSearchParams = Record<string, string | string[] | undefined>

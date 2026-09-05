@@ -1,4 +1,4 @@
-import type { Product } from '@/lib/data'
+import type { Product } from '@/lib/catalog/types'
 import { getProductFacts } from '@/lib/catalog/product-display'
 
 export function ProductSpecifications({ product }: { product: Product }) {

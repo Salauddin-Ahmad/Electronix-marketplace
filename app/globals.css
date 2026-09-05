@@ -22,6 +22,7 @@ button, input, select, textarea { font: inherit; }
 @media (max-width: 767px) { .container-shell { width: min(100% - 28px, 1440px); } }
 .font-display { font-family: Rajdhani, sans-serif; }
 .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #1d4ed8; }
+.technical-label { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #1d4ed8; }
 .icon-btn { display: inline-grid; min-width: 40px; min-height: 40px; place-items: center; color: #47505b; }
 .icon-btn:hover { background: #f0f1ef; color: #11161d; }
 .scrollbar-none { scrollbar-width: none; }

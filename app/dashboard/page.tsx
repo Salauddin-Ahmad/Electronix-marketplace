@@ -1,5 +1,114 @@
-'use client';
-import Link from 'next/link';
-import { LayoutDashboard, ShoppingBag, Package, Warehouse, Truck, Users, Tags, FileText, Settings, AlertTriangle, ArrowUpRight } from 'lucide-react';
-const kpis=[['Today\'s Revenue','$12,480','+12.4%'],['Orders','86','+8.2%'],['Low Stock','14','Needs review'],['Open Quotes','9','3 new']];
-export default function Dashboard(){return <div className="min-h-screen bg-[#f5f3f0] text-ink"><aside className="fixed inset-y-0 left-0 hidden md:flex w-64 bg-[#242725] text-white flex-col"><div className="p-6 border-b border-white/10"><Link href="/" className="font-display text-2xl font-bold text-yellow">VOLTRONIX</Link><div className="text-xs text-white/50 mt-1">Control Center</div></div><nav className="p-3 space-y-1">{[['Overview',LayoutDashboard,'/dashboard'],['Orders',ShoppingBag,'/orders'],['Products',Package,'/products'],['Inventory',Warehouse,'/inventory'],['Purchases',Truck,'/purchases'],['Customers',Users,'/customers'],['Solutions & Quotes',FileText,'/solutions'],['Price Challenges',Tags,'/price-challenge'],['Settings',Settings,'/settings']].map(([t,I,h])=>{const Icon=I as React.ComponentType<{size?:number}>;return <Link key={t as string} href={h as string} className={`flex items-center gap-3 px-3 py-3 text-sm rounded-[4px] ${(t as string)==='Overview'?'bg-white/10 text-yellow':'text-white/75 hover:bg-white/5 hover:text-white'}`}><Icon size={17}/>{t as string}</Link>})}</nav></aside><main className="md:ml-64"><header className="h-16 bg-white border-b border-line flex items-center justify-between px-5 md:px-8"><div><div className="text-xs text-[#747870]">Admin</div><div className="font-semibold">Overview</div></div><div className="text-sm text-[#646962]">Live mock data • REST-ready frontend</div></header><div className="p-5 md:p-8"><div className="flex items-end justify-between"><div><div className="technical-label text-brand-500">Business overview</div><h1 className="font-display text-4xl font-bold mt-2">Good morning.</h1></div><button className="bg-yellow px-4 py-2.5 font-semibold">Add product</button></div><div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mt-7">{kpis.map(([a,b,c])=><div className="bg-white border border-line p-5" key={a as string}><div className="text-sm text-[#72776f]">{a as string}</div><div className="font-display text-3xl font-bold mt-2">{b as string}</div><div className="text-xs mt-2 text-[#46664b]">{c as string}</div></div>)}</div><div className="grid lg:grid-cols-[1.15fr_.85fr] gap-5 mt-6"><section className="bg-white border border-line p-5"><div className="flex justify-between items-center"><div><div className="technical-label text-brand-500">Sales</div><h2 className="font-display text-xl font-bold mt-1">Revenue overview</h2></div><button className="border border-line px-3 py-2 text-xs">Last 30 days</button></div><div className="mt-7 h-52 flex items-end gap-2">{[42,55,48,72,61,80,66,92,74,87,78,96,82,88].map((v,i)=><div key={i} className="flex-1 bg-[#d9d5ca] hover:bg-[#a58602] transition-colors" style={{height:`${v}%`}} title={`Day ${i+1}`}/>)}</div><div className="mt-3 flex justify-between text-xs text-[#858a84]"><span>30 days ago</span><span>Today</span></div></section><section className="bg-white border border-line p-5"><div className="technical-label text-brand-500">Attention</div><h2 className="font-display text-xl font-bold mt-1">Inventory alerts</h2><div className="mt-5 space-y-3">{[['3µF Ceiling Fan Capacitor','8 left'],['16A RCBO 30mA','14 left'],['Solder Wire 0.8mm','19 left']].map(([a,b])=><div className="flex items-center justify-between border-b border-line pb-3" key={a}><div><div className="text-sm font-semibold">{a}</div><div className="text-xs text-[#72766f] mt-1">{b}</div></div><AlertTriangle size={17} className="text-amber-600"/></div>)}<Link href="/dashboard" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600">Review inventory <ArrowUpRight size={15}/></Link></div></section></div><section className="bg-white border border-line p-5 mt-5"><div className="flex justify-between items-center"><div><div className="technical-label text-brand-500">Recent orders</div><h2 className="font-display text-xl font-bold mt-1">Latest activity</h2></div><button className="text-sm font-semibold text-brand-600">View all</button></div><div className="mt-5 overflow-x-auto"><table className="w-full text-sm"><thead><tr className="bg-panel text-left"><th className="p-3">Order</th><th className="p-3">Customer</th><th className="p-3">Items</th><th className="p-3">Total</th><th className="p-3">Status</th></tr></thead><tbody>{[['#VX-1042','Rahman Electric','4','$248.40','Processing'],['#VX-1041','Northside Renovation','12','$812.90','Shipped'],['#VX-1040','S. Ahmed','2','$49.80','Delivered']].map(r=><tr className="border-t border-line" key={r[0]}>{r.map((c,i)=><td className="p-3" key={i}>{i===4?<span className="px-2 py-1 bg-[#eaf3ec] text-[#46664b] text-xs font-semibold">{c}</span>:c}</td>)}</tr>)}</tbody></table></div></section></div></main></div>}
+import { ArrowRight, Database, FileWarning, PackageSearch } from 'lucide-react'
+import Link from 'next/link'
+import { DataTable, type DataTableColumn } from '@/components/dashboard/data-table'
+import { MetricCard } from '@/components/dashboard/metric-card'
+import { PageHeader } from '@/components/dashboard/page-header'
+import { StatusBadge } from '@/components/dashboard/status-badge'
+import {
+  dashboardCatalogMetrics,
+  dashboardCategoryReports,
+  type DashboardCategoryReport,
+} from '@/lib/dashboard/catalog-data'
+
+const categoryColumns: DataTableColumn<DashboardCategoryReport>[] = [
+  {
+    key: 'category',
+    header: 'Customer category',
+    cell: (row) => <span className="font-semibold text-slate-950">{row.name}</span>,
+  },
+  {
+    key: 'products',
+    header: 'Mock items',
+    className: 'text-right',
+    cell: (row) => row.productCount,
+  },
+  {
+    key: 'commercial-data',
+    header: 'Commercial data',
+    cell: (row) => (
+      <StatusBadge tone={row.pricePendingCount ? 'warning' : 'success'}>
+        {row.pricePendingCount ? `${row.pricePendingCount} price reviews pending` : 'Price data present'}
+      </StatusBadge>
+    ),
+  },
+]
+
+export default function DashboardOverviewPage() {
+  const metrics = dashboardCatalogMetrics()
+  const categoryReports = dashboardCategoryReports()
+
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        title="Operations overview"
+        description="A read-only frontend preview built from the current mock catalog. It does not contain live orders, revenue, stock quantities, customer records, or saved operations."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        {metrics.map((metric) => (
+          <MetricCard
+            key={metric.label}
+            description={metric.description}
+            label={metric.label}
+            tone={metric.tone}
+            value={metric.value}
+          />
+        ))}
+      </div>
+
+      <section className="grid gap-5 xl:grid-cols-[1.35fr_.65fr]">
+        <div className="border border-slate-200 bg-white p-5 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="eyebrow">Catalog coverage</p>
+              <h2 className="mt-2 font-display text-3xl font-bold text-slate-950">Customer category readiness</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Counts are calculated from the mock catalog and central category mapping.
+              </p>
+            </div>
+            <Link
+              className="focus-ring inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-900"
+              href="/dashboard/reports"
+            >
+              View full report <ArrowRight aria-hidden="true" size={16} />
+            </Link>
+          </div>
+          <div className="mt-5">
+            <DataTable columns={categoryColumns} getRowId={(row) => row.slug} rows={categoryReports} />
+          </div>
+        </div>
+
+        <aside className="border border-blue-200 bg-blue-50 p-5 sm:p-6">
+          <Database aria-hidden="true" className="text-blue-700" size={22} />
+          <p className="eyebrow mt-4">Current boundary</p>
+          <h2 className="mt-2 font-display text-3xl font-bold text-slate-950">Frontend only</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-700">
+            This shell is ready for a future service layer, but no API, authentication, persistence, pricing
+            authority, or inventory integration has been connected.
+          </p>
+          <div className="mt-5 border-t border-blue-200 pt-5">
+            <Link
+              className="focus-ring inline-flex items-center gap-1.5 text-sm font-semibold text-blue-800 hover:text-blue-950"
+              href="/dashboard/products"
+            >
+              Inspect catalog preview <PackageSearch aria-hidden="true" size={16} />
+            </Link>
+          </div>
+        </aside>
+      </section>
+
+      <section className="border border-slate-200 bg-white p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <FileWarning aria-hidden="true" className="mt-0.5 shrink-0 text-amber-700" size={20} />
+          <div>
+            <h2 className="font-display text-2xl font-bold text-slate-950">Before operational use</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Add a protected backend, verified catalog data, audited stock records, order workflow, and role-based
+              access before treating this dashboard as an operations system.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}

@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { ImageIcon } from 'lucide-react'
 import { useState } from 'react'
-import type { Product } from '@/lib/data'
+import type { Product } from '@/lib/catalog/types'
 
 export function ProductGallery({ product }: { product: Product }) {
   const images = Array.from(new Set([

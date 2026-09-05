@@ -6,12 +6,14 @@ import { ProductGallery } from '@/components/product/product-gallery'
 import { ProductSpecifications } from '@/components/product/product-specifications'
 import { ProductPurchaseActions } from '@/components/product-purchase-actions'
 import { RecentlyViewedProducts } from '@/components/recently-viewed-products'
+import { JsonLd } from '@/components/seo/json-ld'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { getNavigationCategoryForSource } from '@/lib/catalog/navigation'
 import { getAvailabilityText, getProductSummary, getTechnicalFacts } from '@/lib/catalog/product-display'
 import { formatBDT } from '@/lib/currency'
 import { getProduct, products, relatedProducts } from '@/lib/data'
+import { absoluteUrl, canonicalMetadata, productSeoDescription } from '@/lib/seo'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -25,9 +27,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!product) return { title: 'Product not found' }
 
+  const description = productSeoDescription(product.name, product.shortDescription)
+  const canonicalPath = `/product/${product.slug}`
+  const imageUrl = product.images.primary ? absoluteUrl(product.images.primary) : undefined
+
   return {
     title: product.name,
-    description: `${product.shortDescription} Ask VOLTRONIX to confirm current pricing, availability and delivery.`,
+    description,
+    ...canonicalMetadata(canonicalPath),
+    openGraph: {
+      title: `${product.name} | VOLTRONIX`,
+      description,
+      url: absoluteUrl(canonicalPath),
+      images: imageUrl ? [{ url: imageUrl, alt: product.name }] : undefined,
+    },
   }
 }
 
@@ -41,11 +54,47 @@ export default async function ProductPage({ params }: Props) {
   const technicalHighlights = getTechnicalFacts(product).slice(0, 4)
   const availabilityText = getAvailabilityText(product)
   const productSummary = getProductSummary(product)
+  const productUrl = absoluteUrl(`/product/${product.slug}`)
+  const productImageUrl = product.images.primary ? absoluteUrl(product.images.primary) : undefined
+  const breadcrumbItems = productUrl
+    ? [
+      { name: 'Home', item: absoluteUrl('/')! },
+      ...(publicCategory ? [{ name: publicCategory.name, item: absoluteUrl(`/category/${publicCategory.slug}`)! }] : []),
+      { name: product.name, item: productUrl },
+    ]
+    : []
+  const productSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: productSummary,
+    sku: product.sku,
+    category: publicCategory?.name ?? product.category,
+    image: productImageUrl ? [productImageUrl] : undefined,
+    brand: product.brand ? { '@type': 'Brand', name: product.brand } : undefined,
+    additionalProperty: technicalHighlights.map((fact) => ({
+      '@type': 'PropertyValue',
+      name: fact.label,
+      value: fact.value,
+    })),
+  }
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbItems.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.item,
+    })),
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f8f6]">
+      {productUrl ? <JsonLd data={productSchema} /> : null}
+      {breadcrumbItems.length > 0 ? <JsonLd data={breadcrumbSchema} /> : null}
       <SiteHeader />
-      <main className="container-shell py-8 sm:py-10">
+      <main id="main-content" className="container-shell py-8 sm:py-10">
         <nav aria-label="Breadcrumb" className="text-xs text-slate-500">
           <ol className="flex flex-wrap items-center gap-2">
             <li><Link href="/" className="hover:text-brand-600">Home</Link></li>

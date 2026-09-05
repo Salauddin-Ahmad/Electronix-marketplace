@@ -122,6 +122,7 @@ export type Category=typeof categories[number]
 export const getProduct = (slugOrId: string) => allProducts.find((product) => (
   product.slug === slugOrId || product.id === slugOrId
 ))
+export const getProductBySku = (sku: string) => allProducts.find((product) => product.sku === sku)
 export const getCategory=getNavigationCategory
 
 export const productsByNavigationCategory = (slug: string) => {

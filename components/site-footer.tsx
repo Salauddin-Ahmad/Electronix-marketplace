@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Mail, MapPin, MessageCircle } from 'lucide-react';
+import { MapPin, MessageCircle } from 'lucide-react';
 import { navigationLinks } from '@/lib/catalog/navigation';
 import { buildGeneralWhatsAppUrl, WHATSAPP_DISPLAY_NUMBER } from '@/lib/whatsapp';
 
@@ -20,7 +20,6 @@ export function SiteFooter() {
               >
                 <MessageCircle size={15} className="text-[#25D366]" /> WhatsApp: {WHATSAPP_DISPLAY_NUMBER}
               </a>
-              <div className="flex items-center gap-2"><Mail size={15} className="text-blue-400" /> hello@voltronix.example</div>
               <div className="flex items-center gap-2"><MapPin size={15} className="text-blue-400" /> Bangladesh</div>
             </div>
           </div>
@@ -30,7 +29,7 @@ export function SiteFooter() {
             ...navigationLinks.slice(5), ['Priority products', '/search?q=best'], ['All Products', '/search'],
           ]} />
           <FooterColumn title="Business" links={[
-            ['Home & Building Solutions', '/category/home-solutions'], ['Wholesale & Bulk', '/wholesale'], ['Price Challenge', '/price-challenge'], ['Customer Account', '/account'], ['Support', '/account'],
+            ['Home & Building Solutions', '/solutions'], ['Wholesale & Bulk', '/wholesale'], ['Price Challenge', '/price-challenge'], ['All Products', '/search'],
           ]} />
         </div>
 
@@ -44,5 +43,5 @@ export function SiteFooter() {
 }
 
 function FooterColumn({ title, links }: { title: string; links: ReadonlyArray<readonly [string, string]> }) {
-  return <div><h3 className="font-display text-base font-bold tracking-wide text-white">{title}</h3><div className="mt-4 space-y-3">{links.map(([label, href]) => <Link key={href + label} href={href} className="block text-sm text-slate-400 transition hover:text-white">{label}</Link>)}</div><Link href="/" className="mt-5 inline-flex items-center gap-1 text-xs font-semibold text-blue-400 hover:text-blue-300">Explore <ArrowRight size={13} /></Link></div>;
+  return <div><h3 className="font-display text-base font-bold tracking-wide text-white">{title}</h3><div className="mt-4 space-y-3">{links.map(([label, href]) => <Link key={href + label} href={href} className="block text-sm text-slate-400 transition hover:text-white">{label}</Link>)}</div></div>;
 }

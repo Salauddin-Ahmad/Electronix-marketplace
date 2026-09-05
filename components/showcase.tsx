@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-import type { Product } from '@/lib/data'
+import type { Product } from '@/lib/catalog/types'
 import { ProductGrid } from '@/components/product-card'
 
 type ShowcaseProps = {

@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, ShoppingCart } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import type { Product } from '@/lib/data'
+import type { Product } from '@/lib/catalog/types'
 import { useCart } from '@/components/cart-provider'
 
 export function AddToCartButton({
@@ -25,7 +25,9 @@ export function AddToCartButton({
   const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const baseClassName = `inline-flex items-center justify-center gap-2 font-bold text-white ${compact ? 'px-3 py-2 text-sm' : 'px-5 py-3 text-sm'} ${className}`
   const feedbackButtonClassName = `${baseClassName} ${electric ? 'min-w-[10.5rem]' : ''} bg-brand-500 focus:outline-none focus-visible:brightness-95`
-  const label = product.pricing.sellingPrice === null ? 'Bulk order quote' : 'Add to cart'
+  const isQuoteItem = product.pricing.sellingPrice === null
+  const label = isQuoteItem ? (compact ? 'Quote' : 'Add to quote list') : 'Add to cart'
+  const addedLabel = compact ? 'Added' : isQuoteItem ? 'Added to quote list' : 'Added to cart'
   const iconSize = compact ? 15 : 17
   const safeQuantity = Number.isFinite(quantity) ? Math.max(1, Math.floor(quantity)) : 1
 
@@ -53,10 +55,10 @@ export function AddToCartButton({
           transition={{ duration: 0.14, ease: 'easeOut' }}
         >
           {added ? <Check size={iconSize} strokeWidth={2.6} aria-hidden="true" /> : <ShoppingCart size={iconSize} aria-hidden="true" />}
-          {added ? 'Added to cart' : label}
+          {added ? addedLabel : label}
         </motion.span>
       </AnimatePresence>
-      <span className="sr-only" aria-live="polite">{added ? `${safeQuantity} ${product.name} added to cart` : ''}</span>
+      <span className="sr-only" aria-live="polite">{added ? `${safeQuantity} ${product.name} ${isQuoteItem ? 'added to the quote list' : 'added to cart'}` : ''}</span>
     </>
   )
 
@@ -65,7 +67,7 @@ export function AddToCartButton({
       type="button"
       onClick={handleAdd}
       className={feedbackButtonClassName}
-      aria-label={added ? `${safeQuantity} ${product.name} added to cart` : product.pricing.sellingPrice === null ? `Add ${safeQuantity} ${product.name} for quote` : `Add ${safeQuantity} ${product.name} to cart`}
+      aria-label={added ? `${safeQuantity} ${product.name} ${isQuoteItem ? 'added to the quote list' : 'added to cart'}` : isQuoteItem ? `Add ${safeQuantity} ${product.name} to the quote list` : `Add ${safeQuantity} ${product.name} to cart`}
       initial={false}
       animate={{ backgroundColor: added ? '#1e3a5f' : '#2563eb' }}
       whileHover={{ y: -1, boxShadow: compact ? '0 5px 12px rgba(15, 35, 65, 0.16)' : '0 7px 16px rgba(15, 35, 65, 0.18)' }}

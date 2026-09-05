@@ -14,6 +14,7 @@ type Props = { searchParams: Promise<RawCatalogSearchParams> }
 export const metadata: Metadata = {
   title: 'Product Catalogue',
   description: 'Search and filter the VOLTRONIX electrical product catalogue.',
+  robots: { index: false, follow: true },
 }
 
 export default async function SearchPage({ searchParams }: Props) {
@@ -37,7 +38,7 @@ export default async function SearchPage({ searchParams }: Props) {
   return (
     <div>
       <SiteHeader />
-      <main className="container-shell py-10">
+      <main id="main-content" className="container-shell py-10">
         <div className="eyebrow">Complete catalogue</div>
         <h1 className="font-display mt-2 text-4xl font-bold">{showAll ? 'All Products' : showPriority ? 'Priority Products' : `Search results for “${q}”`}</h1>
 
