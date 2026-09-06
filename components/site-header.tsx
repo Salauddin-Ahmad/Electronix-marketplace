@@ -1,11 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, ShoppingCart } from 'lucide-react';
+import { ChevronDown, ChevronRight, Menu, Search, ShoppingCart } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { BrandLogo } from '@/components/brand-logo';
-import { navigationLinks } from '@/lib/catalog/navigation';
+import {
+  catalogueNavigationGroups,
+  type CatalogueNavigationGroupId,
+} from '@/lib/catalog/navigation';
 import { buildGeneralWhatsAppUrl } from '@/lib/whatsapp';
 import { useCart } from './cart-provider';
 
@@ -13,26 +16,58 @@ export function SiteHeader() {
   const { count } = useCart();
   const pathname = usePathname();
   const router = useRouter();
+  const navigationRef = useRef<HTMLDivElement>(null);
   const [q, setQ] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [navHover, setNavHover] = useState({ left: 0, width: 0, visible: false });
+  const [activeGroup, setActiveGroup] = useState<CatalogueNavigationGroupId | null>(null);
 
-  const submit = (event: React.FormEvent) => {
-    event.preventDefault();
-    const query = q.trim();
-    router.push(query ? `/search?q=${encodeURIComponent(query)}` : '/search');
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveGroup(null);
+        setMobileOpen(false);
+      }
+    };
+
+    const closeOnOutsidePress = (event: MouseEvent) => {
+      if (event.target instanceof Node && !navigationRef.current?.contains(event.target)) {
+        setActiveGroup(null);
+      }
+    };
+
+    document.addEventListener('keydown', closeOnEscape);
+    document.addEventListener('mousedown', closeOnOutsidePress);
+
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('mousedown', closeOnOutsidePress);
+    };
+  }, []);
+
+  const closeNavigation = () => {
+    setActiveGroup(null);
     setMobileOpen(false);
   };
 
-  const positionNavHover = (event: React.SyntheticEvent<HTMLElement>) => {
-    const item = event.currentTarget;
-    const left = item.offsetLeft;
-    const width = item.offsetWidth;
-    setNavHover((current) => (
-      current.left === left && current.width === width && current.visible
-        ? current
-        : { left, width, visible: true }
-    ));
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = q.trim();
+    router.push(query ? `/search?q=${encodeURIComponent(query)}` : '/search');
+    closeNavigation();
+  };
+
+  const toggleGroup = (groupId: CatalogueNavigationGroupId) => {
+    setActiveGroup((current) => (current === groupId ? null : groupId));
+  };
+
+  const toggleMobileNavigation = () => {
+    if (mobileOpen) {
+      closeNavigation();
+      return;
+    }
+
+    setActiveGroup(null);
+    setMobileOpen(true);
   };
 
   return (
@@ -58,7 +93,7 @@ export function SiteHeader() {
 
             <div className="ml-auto flex items-center gap-1">
               <Link href="/cart" aria-label="Quote list" className="icon-btn relative"><ShoppingCart size={20} />{count > 0 && <span className="absolute -right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-brand-500 px-1 text-[9px] font-extrabold text-white">{count}</span>}</Link>
-              <button type="button" onClick={() => setMobileOpen((value) => !value)} className="icon-btn md:hidden" aria-label="Toggle navigation" aria-expanded={mobileOpen} aria-controls="primary-navigation"><Menu size={21} /></button>
+              <button type="button" onClick={toggleMobileNavigation} className="icon-btn md:hidden" aria-label="Toggle navigation" aria-expanded={mobileOpen} aria-controls="primary-navigation"><Menu size={21} /></button>
             </div>
           </div>
 
@@ -70,24 +105,105 @@ export function SiteHeader() {
           </form>
         </div>
 
-        <div className={`${mobileOpen ? 'block' : 'hidden'} border-y border-[#25344d] bg-[#172033] md:block`}>
+        <div ref={navigationRef} className={`${mobileOpen ? 'block' : 'hidden'} border-y border-[#25344d] bg-[#172033] md:block`}>
           <div className="container-shell">
-            <nav
-              id="primary-navigation"
-              onPointerLeave={() => setNavHover((current) => ({ ...current, visible: false }))}
-              className="scrollbar-none relative flex flex-col py-2 md:flex-row md:items-center md:justify-between md:gap-2 md:overflow-x-auto md:py-1"
-            >
-              <span
-                aria-hidden="true"
-                style={{ width: navHover.width, transform: `translateX(${navHover.left}px)`, opacity: navHover.visible ? 1 : 0 }}
-                className="pointer-events-none absolute inset-y-1 left-0 z-0 hidden border border-white/10 bg-white/[0.08] shadow-[0_5px_16px_rgba(2,6,23,0.18)] transition-[width,transform,opacity] duration-300 ease-out md:block"
-              />
-              <button type="button" onPointerMove={positionNavHover} onFocus={positionNavHover} onClick={() => router.push('/search')} className="relative z-10 hidden shrink-0 items-center gap-1 px-2 py-3 text-xs font-extrabold uppercase tracking-wide text-blue-300 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#172033] md:inline-flex xl:text-[13px]">All Products</button>
-              {navigationLinks.map(([label, href]) => (
-                <Link key={href} href={href} onPointerMove={positionNavHover} onFocus={positionNavHover} onClick={() => setMobileOpen(false)} aria-current={pathname.startsWith(href) ? 'page' : undefined} className={`relative z-10 shrink-0 whitespace-nowrap border-b-2 px-2 py-3 text-[13px] font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#172033] md:text-xs xl:text-[13px] ${pathname.startsWith(href) ? 'border-blue-400 text-white' : 'border-transparent text-slate-300 hover:bg-white/10 hover:text-white md:hover:bg-transparent'}`}>{label}</Link>
-              ))}
+            <nav id="primary-navigation" aria-label="Product categories" className="flex flex-col py-1 md:flex-row md:items-center md:gap-1">
+              {catalogueNavigationGroups.map((group) => {
+                const isOpen = activeGroup === group.id;
+                const containsCurrentRoute = group.categories.some(
+                  (category) => pathname === `/category/${category.slug}`,
+                ) || pathname === group.viewAll?.href;
+
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    onClick={() => toggleGroup(group.id)}
+                    aria-expanded={isOpen}
+                    aria-controls={`catalogue-group-${group.id}`}
+                    className={`group flex w-full items-center justify-between gap-1 px-3 py-3 text-left text-sm font-bold transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#172033] md:w-auto md:justify-start md:text-xs xl:text-[13px] ${
+                      isOpen || containsCurrentRoute ? 'text-[#f6c90e]' : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    <span>{group.label}</span>
+                    <ChevronDown
+                      size={15}
+                      aria-hidden="true"
+                      className={`shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                );
+              })}
             </nav>
           </div>
+
+          {catalogueNavigationGroups.map((group) => {
+            const isOpen = activeGroup === group.id;
+
+            return (
+              <section
+                key={group.id}
+                id={`catalogue-group-${group.id}`}
+                aria-label={`Browse ${group.label}`}
+                aria-hidden={!isOpen}
+                className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${
+                  isOpen ? 'grid-rows-[1fr] opacity-100' : 'pointer-events-none grid-rows-[0fr] opacity-0'
+                }`}
+              >
+                <div className="min-h-0 overflow-hidden">
+                  <div className="border-t border-white/10 bg-[#111827]">
+                    <div className="container-shell py-3">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {group.categories.map((category) => {
+                          const href = `/category/${category.slug}`;
+                          const isCurrent = pathname === href;
+
+                          return (
+                            <Link
+                              key={category.slug}
+                              href={href}
+                              tabIndex={isOpen ? 0 : -1}
+                              aria-current={isCurrent ? 'page' : undefined}
+                              onClick={closeNavigation}
+                              className={`group flex min-h-12 items-center justify-between gap-3 border px-4 py-3 text-sm font-semibold transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] ${
+                                isCurrent
+                                  ? 'border-slate-400 bg-white/[0.05] text-white'
+                                  : 'border-white/10 bg-white/[0.02] text-slate-200 hover:border-slate-500 hover:text-white'
+                              }`}
+                            >
+                              <span>{category.name}</span>
+                              <ChevronRight
+                                size={16}
+                                aria-hidden="true"
+                                className="shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-slate-200"
+                              />
+                            </Link>
+                          );
+                        })}
+
+                        {group.viewAll && (
+                          <Link
+                            href={group.viewAll.href}
+                            tabIndex={isOpen ? 0 : -1}
+                            aria-current={pathname === group.viewAll.href ? 'page' : undefined}
+                            onClick={closeNavigation}
+                            className="group flex min-h-12 items-center justify-between gap-3 border border-[#f6c90e]/50 bg-[#f6c90e]/[0.06] px-4 py-3 text-sm font-semibold text-[#f6c90e] transition-colors duration-200 hover:border-[#f6c90e] hover:text-[#fff0a6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f6c90e] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827]"
+                          >
+                            <span>{group.viewAll.label}</span>
+                            <ChevronRight
+                              size={16}
+                              aria-hidden="true"
+                              className="shrink-0 transition-transform duration-200 group-hover:translate-x-0.5"
+                            />
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            );
+          })}
         </div>
       </header>
     </>

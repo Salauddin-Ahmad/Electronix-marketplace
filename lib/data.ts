@@ -1,4 +1,5 @@
 import { getNavigationCategory, navigationCategories } from '@/lib/catalog/navigation'
+import { gadgetProducts } from '@/lib/catalog/gadget-seed-data'
 import { productImage } from '@/lib/catalog/product-images'
 import type { Priority, Product, StockMode } from '@/lib/catalog/types'
 
@@ -56,7 +57,7 @@ const inferAttributes=(category:string,subcategory:string,name:string)=>{
   return attributes
 }
 // Keep the source order stable: IDs, SKUs and public slugs intentionally derive from it.
-const allProducts: Product[] = source.map(([category, subcategory, name], index) => {
+const legacyProducts: Product[] = source.map(([category, subcategory, name], index) => {
   const itemNumber = index + 1
   const slug = `${slugify(name)}-${itemNumber}`
   const stockMode: StockMode = high.test(name)
@@ -104,13 +105,18 @@ const allProducts: Product[] = source.map(([category, subcategory, name], index)
   }
 })
 
+const allProducts: Product[] = [...legacyProducts, ...gadgetProducts]
+
 // Launch policy: show half of every source category without removing any category.
 const categoryPositions = new Map<string, number>()
-export const products: Product[] = allProducts.filter((product) => {
-  const position = categoryPositions.get(product.category) ?? 0
-  categoryPositions.set(product.category, position + 1)
-  return position % 2 === 0
-})
+export const products: Product[] = [
+  ...legacyProducts.filter((product) => {
+    const position = categoryPositions.get(product.category) ?? 0
+    categoryPositions.set(product.category, position + 1)
+    return position % 2 === 0
+  }),
+  ...gadgetProducts,
+]
 
 export const categories = [...new Set(products.map((product) => product.category))].map((name) => ({
   name,

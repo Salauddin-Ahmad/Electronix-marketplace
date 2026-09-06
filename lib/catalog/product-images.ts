@@ -1,6 +1,9 @@
-import { getNavigationCategoryForSource } from '@/lib/catalog/navigation'
+import {
+  getNavigationCategoryForSource,
+  type NavigationCategorySlug,
+} from '@/lib/catalog/navigation'
 
-const categoryIllustrations = {
+const categoryIllustrations: Partial<Record<NavigationCategorySlug, string>> = {
   'electrical-wiring': '/products/generated/electrical-wiring.webp',
   'switches-sockets': '/products/generated/switches-sockets.webp',
   'lighting-fans': '/products/generated/lighting-fans.webp',
@@ -15,6 +18,6 @@ const categoryIllustrations = {
 export function productImage(category: string) {
   const publicCategory = getNavigationCategoryForSource(category)
   return publicCategory
-    ? categoryIllustrations[publicCategory.slug]
+    ? categoryIllustrations[publicCategory.slug] ?? '/products/dummy-product.svg'
     : '/products/dummy-product.svg'
 }

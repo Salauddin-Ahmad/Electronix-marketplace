@@ -1,0 +1,563 @@
+import type { Product } from '@/lib/catalog/types'
+
+/**
+ * Raw catalogue sources for the first Gadgets assortment. These are separate
+ * from customer-facing navigation labels so products can retain one canonical
+ * source category while appearing in the Gadgets hub.
+ */
+export const gadgetSourceCategories = {
+  mobileAccessories: 'Gadgets / Mobile Accessories',
+  chargingPower: 'Gadgets / Charging & Power',
+  computerDesk: 'Gadgets / Computer & Desk',
+  wearablesPersonalCare: 'Gadgets / Wearables & Personal Care',
+  portableFansLights: 'Gadgets / Portable Fans & Lights',
+  deviceCareUtility: 'Gadgets / Device Care & Utility',
+} as const
+
+export type GadgetSourceCategory = (typeof gadgetSourceCategories)[keyof typeof gadgetSourceCategories]
+
+// These are unbranded, category-level illustrative assets. They deliberately
+// represent an assortment, not a guaranteed photo of each starter listing.
+const gadgetIllustrationBySourceCategory: Record<GadgetSourceCategory, string> = {
+  [gadgetSourceCategories.mobileAccessories]: '/products/generated/gadgets/mobile-accessories.png',
+  [gadgetSourceCategories.chargingPower]: '/products/generated/gadgets/charging-power.png',
+  [gadgetSourceCategories.computerDesk]: '/products/generated/gadgets/computer-desk.png',
+  [gadgetSourceCategories.wearablesPersonalCare]: '/products/generated/gadgets/wearables-personal-care.png',
+  [gadgetSourceCategories.portableFansLights]: '/products/generated/gadgets/portable-fans-lights.png',
+  [gadgetSourceCategories.deviceCareUtility]: '/products/generated/gadgets/device-care-utility.png',
+}
+
+export const gadgetSourceCategoryNames = [
+  gadgetSourceCategories.mobileAccessories,
+  gadgetSourceCategories.chargingPower,
+  gadgetSourceCategories.computerDesk,
+  gadgetSourceCategories.wearablesPersonalCare,
+  gadgetSourceCategories.portableFansLights,
+  gadgetSourceCategories.deviceCareUtility,
+] as const
+
+type GadgetAttributes = NonNullable<Product['attributes']>
+
+type GadgetProductSeed = {
+  id: string
+  sku: string
+  name: string
+  slug: string
+  category: GadgetSourceCategory
+  subcategory: string
+  shortDescription: string
+  attributes: GadgetAttributes
+  applications: string[]
+  tags: string[]
+}
+
+const catalogueVerificationNotice = 'This catalogue starter listing is pending supplier confirmation. Confirm the final model, brand, specifications, price and availability before ordering.'
+
+function createGadgetProduct(seed: GadgetProductSeed): Product {
+  return {
+    id: seed.id,
+    sku: seed.sku,
+    name: seed.name,
+    slug: seed.slug,
+    category: seed.category,
+    subcategory: seed.subcategory,
+    priority: 'P3',
+    stockMode: 'order',
+    trending: false,
+    shortDescription: `${seed.shortDescription} Specifications and price require confirmation.`,
+    description: `${seed.shortDescription} ${catalogueVerificationNotice}`,
+    brand: null,
+    brandSuggestions: [],
+    specifications: {
+      'Catalogue status': 'Starter listing — details pending verification',
+    },
+    attributes: seed.attributes,
+    applications: seed.applications,
+    images: {
+      primary: gadgetIllustrationBySourceCategory[seed.category],
+      gallery: [],
+      imageSearchQuery: seed.name,
+    },
+    pricing: {
+      currency: 'BDT',
+      cost: null,
+      sellingPrice: null,
+    },
+    availability: {
+      inStock: null,
+      quantity: null,
+      unit: 'pcs',
+    },
+    supplier: {
+      supplierId: null,
+      supplierName: null,
+    },
+    tags: ['gadgets', ...seed.tags],
+    status: 'active',
+  }
+}
+
+// These entries are deliberately brand-neutral and quote-only until real
+// supplier data, compatibility, images and prices are reviewed.
+export const gadgetProducts: Product[] = [
+  createGadgetProduct({
+    id: 'gadget-001',
+    sku: 'VLT-GAD-001',
+    name: 'Soft TPU Phone Case',
+    slug: 'soft-tpu-phone-case-gadget-001',
+    category: gadgetSourceCategories.mobileAccessories,
+    subcategory: 'Cases & Covers',
+    shortDescription: 'A protective phone case starter listing for model-specific handset protection.',
+    attributes: {
+      device_compatibility: 'Exact handset model required',
+      accessory_type: 'Soft TPU phone case',
+    },
+    applications: ['Everyday phone protection'],
+    tags: ['mobile-accessories', 'phone-case', 'protective-cover'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-002',
+    sku: 'VLT-GAD-002',
+    name: 'Tempered Glass Screen Protector',
+    slug: 'tempered-glass-screen-protector-gadget-002',
+    category: gadgetSourceCategories.mobileAccessories,
+    subcategory: 'Screen Protectors',
+    shortDescription: 'A screen-protection starter listing that should be matched to the exact phone model.',
+    attributes: {
+      device_compatibility: 'Exact handset model required',
+      accessory_type: 'Tempered glass screen protector',
+    },
+    applications: ['Screen scratch protection'],
+    tags: ['mobile-accessories', 'screen-protector', 'tempered-glass'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-003',
+    sku: 'VLT-GAD-003',
+    name: 'USB-C PD Wall Charger',
+    slug: 'usb-c-pd-wall-charger-gadget-003',
+    category: gadgetSourceCategories.chargingPower,
+    subcategory: 'Wall Chargers',
+    shortDescription: 'A compact fast-charging wall adapter starter listing for USB-C devices.',
+    attributes: {
+      device_compatibility: 'USB-C phones and tablets',
+      connector_type: 'USB-C',
+      charging_protocol: 'USB PD',
+      accessory_type: 'Wall charger',
+    },
+    applications: ['Phone and tablet charging'],
+    tags: ['charging-power', 'wall-charger', 'usb-c', 'pd'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-004',
+    sku: 'VLT-GAD-004',
+    name: 'USB-C Power Bank',
+    slug: 'usb-c-power-bank-gadget-004',
+    category: gadgetSourceCategories.chargingPower,
+    subcategory: 'Power Banks',
+    shortDescription: 'A portable backup-power starter listing for USB-C mobile devices.',
+    attributes: {
+      device_compatibility: 'USB-C phones and tablets',
+      connector_type: 'USB-C',
+      accessory_type: 'Power bank',
+    },
+    applications: ['Travel and emergency mobile charging'],
+    tags: ['charging-power', 'power-bank', 'usb-c', 'portable-power'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-005',
+    sku: 'VLT-GAD-005',
+    name: 'Compact Wireless Keyboard',
+    slug: 'compact-wireless-keyboard-gadget-005',
+    category: gadgetSourceCategories.computerDesk,
+    subcategory: 'Keyboards',
+    shortDescription: 'A compact keyboard starter listing for desk, laptop and tablet setups.',
+    attributes: {
+      peripheral_type: 'Keyboard',
+      connection_type: 'Wireless',
+      layout: 'Compact layout',
+    },
+    applications: ['Desk setup', 'Laptop productivity'],
+    tags: ['computer-desk', 'keyboard', 'wireless-peripheral'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-006',
+    sku: 'VLT-GAD-006',
+    name: 'Ergonomic Wireless Mouse',
+    slug: 'ergonomic-wireless-mouse-gadget-006',
+    category: gadgetSourceCategories.computerDesk,
+    subcategory: 'Mice',
+    shortDescription: 'A wireless mouse starter listing for everyday computer and laptop use.',
+    attributes: {
+      peripheral_type: 'Mouse',
+      connection_type: 'Wireless',
+    },
+    applications: ['Desk setup', 'Laptop productivity'],
+    tags: ['computer-desk', 'mouse', 'wireless-peripheral'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-007',
+    sku: 'VLT-GAD-007',
+    name: 'Bluetooth Fitness Smart Band',
+    slug: 'bluetooth-fitness-smart-band-gadget-007',
+    category: gadgetSourceCategories.wearablesPersonalCare,
+    subcategory: 'Fitness Bands',
+    shortDescription: 'A connected wearable starter listing for basic activity and notification use.',
+    attributes: {
+      wearable_type: 'Fitness band',
+      connection_type: 'Bluetooth',
+    },
+    applications: ['Activity tracking', 'Phone notifications'],
+    tags: ['wearables-personal-care', 'fitness-band', 'smartwearable'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-008',
+    sku: 'VLT-GAD-008',
+    name: 'Rechargeable Personal Grooming Trimmer',
+    slug: 'rechargeable-personal-grooming-trimmer-gadget-008',
+    category: gadgetSourceCategories.wearablesPersonalCare,
+    subcategory: 'Personal Care Devices',
+    shortDescription: 'A rechargeable personal-care device starter listing for routine grooming.',
+    attributes: {
+      wearable_type: 'Personal care device',
+      power_source: 'Rechargeable battery',
+    },
+    applications: ['Personal grooming'],
+    tags: ['wearables-personal-care', 'personal-care', 'grooming-trimmer'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-009',
+    sku: 'VLT-GAD-009',
+    name: 'Rechargeable Handheld Mini Fan',
+    slug: 'rechargeable-handheld-mini-fan-gadget-009',
+    category: gadgetSourceCategories.portableFansLights,
+    subcategory: 'Mini Fans',
+    shortDescription: 'A handheld portable-fan starter listing for personal cooling at work or while travelling.',
+    attributes: {
+      fan_type: 'Handheld rechargeable mini fan',
+      device_type: 'Portable fan',
+      power_source: 'Rechargeable battery',
+    },
+    applications: ['Personal cooling', 'Travel'],
+    tags: ['portable-fans-lights', 'mini-fan', 'rechargeable-fan'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-010',
+    sku: 'VLT-GAD-010',
+    name: 'Rechargeable LED Desk Light',
+    slug: 'rechargeable-led-desk-light-gadget-010',
+    category: gadgetSourceCategories.portableFansLights,
+    subcategory: 'Portable Lights',
+    shortDescription: 'A compact rechargeable desk-light starter listing for study, work and backup lighting.',
+    attributes: {
+      light_type: 'Rechargeable LED desk light',
+      device_type: 'Rechargeable desk light',
+      power_source: 'Rechargeable battery',
+    },
+    applications: ['Desk lighting', 'Study lighting', 'Backup lighting'],
+    tags: ['portable-fans-lights', 'desk-light', 'rechargeable-light'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-011',
+    sku: 'VLT-GAD-011',
+    name: 'Electric Air Blower for Device Cleaning',
+    slug: 'electric-air-blower-device-cleaning-gadget-011',
+    category: gadgetSourceCategories.deviceCareUtility,
+    subcategory: 'Air Blowers',
+    shortDescription: 'An electric blower starter listing for removing dust from computer and device surfaces.',
+    attributes: {
+      care_type: 'Electronics dust removal',
+    },
+    applications: ['Computer and electronics cleaning'],
+    tags: ['device-care-utility', 'air-blower', 'electronics-cleaning'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-012',
+    sku: 'VLT-GAD-012',
+    name: 'Screen and Keyboard Cleaning Kit',
+    slug: 'screen-keyboard-cleaning-kit-gadget-012',
+    category: gadgetSourceCategories.deviceCareUtility,
+    subcategory: 'Cleaning Kits',
+    shortDescription: 'A device-care starter listing for routine screen, keyboard and peripheral cleaning.',
+    attributes: {
+      care_type: 'Screen and peripheral cleaning',
+      accessory_type: 'Device cleaning kit',
+    },
+    applications: ['Screen care', 'Keyboard and peripheral cleaning'],
+    tags: ['device-care-utility', 'cleaning-kit', 'screen-care'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-013',
+    sku: 'VLT-GAD-013',
+    name: 'Adjustable Phone Stand',
+    slug: 'adjustable-phone-stand-gadget-013',
+    category: gadgetSourceCategories.mobileAccessories,
+    subcategory: 'Holders & Stands',
+    shortDescription: 'A desk-use phone stand starter listing for hands-free viewing and video calls.',
+    attributes: {
+      device_compatibility: 'Most smartphones; confirm device fit',
+      accessory_type: 'Adjustable phone stand',
+    },
+    applications: ['Desk viewing', 'Video calls'],
+    tags: ['mobile-accessories', 'phone-stand', 'desk-accessory'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-014',
+    sku: 'VLT-GAD-014',
+    name: 'Adjustable Car Phone Mount',
+    slug: 'adjustable-car-phone-mount-gadget-014',
+    category: gadgetSourceCategories.mobileAccessories,
+    subcategory: 'Holders & Stands',
+    shortDescription: 'A vehicle phone-mount starter listing for hands-free navigation and calls.',
+    attributes: {
+      device_compatibility: 'Most smartphones; confirm device fit',
+      accessory_type: 'Adjustable car phone mount',
+    },
+    applications: ['Vehicle navigation', 'Hands-free calling'],
+    tags: ['mobile-accessories', 'car-mount', 'phone-holder'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-015',
+    sku: 'VLT-GAD-015',
+    name: 'Clip-On Mobile Ring Light',
+    slug: 'clip-on-mobile-ring-light-gadget-015',
+    category: gadgetSourceCategories.mobileAccessories,
+    subcategory: 'Camera Accessories',
+    shortDescription: 'A compact ring-light starter listing for mobile photos, video calls and content capture.',
+    attributes: {
+      device_compatibility: 'Most smartphones; confirm mount fit',
+      accessory_type: 'Clip-on mobile ring light',
+    },
+    applications: ['Video calls', 'Mobile photography', 'Content capture'],
+    tags: ['mobile-accessories', 'ring-light', 'camera-accessory'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-016',
+    sku: 'VLT-GAD-016',
+    name: 'USB-C Charging Cable',
+    slug: 'usb-c-charging-cable-gadget-016',
+    category: gadgetSourceCategories.chargingPower,
+    subcategory: 'Cables & Adapters',
+    shortDescription: 'A USB-C cable starter listing for charging compatible phones, tablets and accessories.',
+    attributes: {
+      device_compatibility: 'USB-C devices',
+      connector_type: 'USB-C',
+      accessory_type: 'Charging cable',
+    },
+    applications: ['Phone charging', 'Tablet charging', 'Accessory charging'],
+    tags: ['charging-power', 'usb-c', 'charging-cable'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-017',
+    sku: 'VLT-GAD-017',
+    name: 'Compact GaN USB-C Charger',
+    slug: 'compact-gan-usb-c-charger-gadget-017',
+    category: gadgetSourceCategories.chargingPower,
+    subcategory: 'Wall Chargers',
+    shortDescription: 'A compact GaN charging-adapter starter listing for compatible USB-C devices.',
+    attributes: {
+      device_compatibility: 'USB-C devices',
+      connector_type: 'USB-C',
+      charging_protocol: 'USB-C charging support',
+      accessory_type: 'GaN wall charger',
+    },
+    applications: ['Phone charging', 'Tablet charging', 'Travel charging'],
+    tags: ['charging-power', 'gan-charger', 'usb-c', 'wall-charger'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-018',
+    sku: 'VLT-GAD-018',
+    name: 'USB Car Charger',
+    slug: 'usb-car-charger-gadget-018',
+    category: gadgetSourceCategories.chargingPower,
+    subcategory: 'Car Chargers',
+    shortDescription: 'A vehicle charging-adapter starter listing for compatible mobile devices.',
+    attributes: {
+      device_compatibility: 'USB-powered mobile devices',
+      connector_type: 'USB',
+      accessory_type: 'Car charger',
+    },
+    applications: ['Vehicle phone charging', 'Travel charging'],
+    tags: ['charging-power', 'car-charger', 'vehicle-accessory'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-019',
+    sku: 'VLT-GAD-019',
+    name: 'Desk Mouse Pad',
+    slug: 'desk-mouse-pad-gadget-019',
+    category: gadgetSourceCategories.computerDesk,
+    subcategory: 'Mouse Pads',
+    shortDescription: 'A desk mouse-pad starter listing for everyday computer and laptop workspaces.',
+    attributes: {
+      peripheral_type: 'Mouse pad',
+    },
+    applications: ['Desk setup', 'Computer and laptop use'],
+    tags: ['computer-desk', 'mouse-pad', 'desk-accessory'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-020',
+    sku: 'VLT-GAD-020',
+    name: 'Adjustable Laptop Stand',
+    slug: 'adjustable-laptop-stand-gadget-020',
+    category: gadgetSourceCategories.computerDesk,
+    subcategory: 'Laptop Stands',
+    shortDescription: 'An adjustable laptop-stand starter listing for a more organised desk setup.',
+    attributes: {
+      peripheral_type: 'Laptop stand',
+    },
+    applications: ['Desk setup', 'Laptop productivity'],
+    tags: ['computer-desk', 'laptop-stand', 'desk-accessory'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-021',
+    sku: 'VLT-GAD-021',
+    name: 'USB-C Multiport Hub',
+    slug: 'usb-c-multiport-hub-gadget-021',
+    category: gadgetSourceCategories.computerDesk,
+    subcategory: 'USB Hubs & Docks',
+    shortDescription: 'A USB-C hub starter listing for connecting compatible laptops and desk accessories.',
+    attributes: {
+      peripheral_type: 'USB hub',
+      connection_type: 'USB-C',
+      connector_type: 'USB-C',
+    },
+    applications: ['Laptop connectivity', 'Desk setup'],
+    tags: ['computer-desk', 'usb-hub', 'usb-c', 'laptop-accessory'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-022',
+    sku: 'VLT-GAD-022',
+    name: 'Bluetooth Smart Watch',
+    slug: 'bluetooth-smart-watch-gadget-022',
+    category: gadgetSourceCategories.wearablesPersonalCare,
+    subcategory: 'Smart Watches',
+    shortDescription: 'A connected smartwatch starter listing for basic notifications and everyday wearable use.',
+    attributes: {
+      wearable_type: 'Smart watch',
+      device_compatibility: 'Smartphones; confirm app compatibility',
+    },
+    applications: ['Phone notifications', 'Everyday wearable use'],
+    tags: ['wearables-personal-care', 'smart-watch', 'smartwearable'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-023',
+    sku: 'VLT-GAD-023',
+    name: 'Replacement Watch Strap',
+    slug: 'replacement-watch-strap-gadget-023',
+    category: gadgetSourceCategories.wearablesPersonalCare,
+    subcategory: 'Watch Accessories',
+    shortDescription: 'A replacement watch-strap starter listing that should be matched to the exact watch model.',
+    attributes: {
+      wearable_type: 'Watch strap',
+      device_compatibility: 'Exact watch model required',
+    },
+    applications: ['Watch strap replacement', 'Wearable personalisation'],
+    tags: ['wearables-personal-care', 'watch-strap', 'watch-accessory'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-024',
+    sku: 'VLT-GAD-024',
+    name: 'Rechargeable Personal Grooming Shaver',
+    slug: 'rechargeable-personal-grooming-shaver-gadget-024',
+    category: gadgetSourceCategories.wearablesPersonalCare,
+    subcategory: 'Personal Care Devices',
+    shortDescription: 'A rechargeable personal-care starter listing for routine shaving and grooming.',
+    attributes: {
+      wearable_type: 'Personal care device',
+      device_compatibility: 'Personal grooming use',
+      power_source: 'Rechargeable battery',
+    },
+    applications: ['Personal grooming'],
+    tags: ['wearables-personal-care', 'personal-care', 'rechargeable-shaver'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-025',
+    sku: 'VLT-GAD-025',
+    name: 'Rechargeable Neck Fan',
+    slug: 'rechargeable-neck-fan-gadget-025',
+    category: gadgetSourceCategories.portableFansLights,
+    subcategory: 'Mini Fans',
+    shortDescription: 'A wearable portable-fan starter listing for personal cooling while travelling or commuting.',
+    attributes: {
+      fan_type: 'Rechargeable neck fan',
+      device_type: 'Portable fan',
+      power_source: 'Rechargeable battery',
+    },
+    applications: ['Personal cooling', 'Travel', 'Commuting'],
+    tags: ['portable-fans-lights', 'neck-fan', 'rechargeable-fan'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-026',
+    sku: 'VLT-GAD-026',
+    name: 'Rechargeable Clip Fan',
+    slug: 'rechargeable-clip-fan-gadget-026',
+    category: gadgetSourceCategories.portableFansLights,
+    subcategory: 'Desk & Clip Fans',
+    shortDescription: 'A compact clip-fan starter listing for focused cooling at a desk, bedside or small workspace.',
+    attributes: {
+      fan_type: 'Rechargeable clip fan',
+      device_type: 'Portable fan',
+      power_source: 'Rechargeable battery',
+    },
+    applications: ['Desk cooling', 'Bedside cooling', 'Small workspace cooling'],
+    tags: ['portable-fans-lights', 'clip-fan', 'rechargeable-fan'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-027',
+    sku: 'VLT-GAD-027',
+    name: 'Rechargeable LED Torch',
+    slug: 'rechargeable-led-torch-gadget-027',
+    category: gadgetSourceCategories.portableFansLights,
+    subcategory: 'Portable Lights',
+    shortDescription: 'A rechargeable torch starter listing for portable and backup lighting.',
+    attributes: {
+      light_type: 'Rechargeable LED torch',
+      device_type: 'Rechargeable torch',
+      power_source: 'Rechargeable battery',
+    },
+    applications: ['Portable lighting', 'Backup lighting'],
+    tags: ['portable-fans-lights', 'rechargeable-torch', 'portable-light'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-028',
+    sku: 'VLT-GAD-028',
+    name: 'Electric Device Cleaning Duster',
+    slug: 'electric-device-cleaning-duster-gadget-028',
+    category: gadgetSourceCategories.deviceCareUtility,
+    subcategory: 'Air Blowers',
+    shortDescription: 'An electric duster starter listing for removing dust from computer and device surfaces.',
+    attributes: {
+      care_type: 'Electronics dust removal',
+      power_source: 'Electric',
+    },
+    applications: ['Computer and electronics cleaning'],
+    tags: ['device-care-utility', 'electric-duster', 'electronics-cleaning'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-029',
+    sku: 'VLT-GAD-029',
+    name: 'Cable Organiser Set',
+    slug: 'cable-organiser-set-gadget-029',
+    category: gadgetSourceCategories.deviceCareUtility,
+    subcategory: 'Cable Management',
+    shortDescription: 'A cable-management starter listing for keeping desk and charging cables organised.',
+    attributes: {
+      care_type: 'Cable management',
+    },
+    applications: ['Desk organisation', 'Cable organisation'],
+    tags: ['device-care-utility', 'cable-organiser', 'desk-accessory'],
+  }),
+  createGadgetProduct({
+    id: 'gadget-030',
+    sku: 'VLT-GAD-030',
+    name: 'Precision Screwdriver Kit',
+    slug: 'precision-screwdriver-kit-gadget-030',
+    category: gadgetSourceCategories.deviceCareUtility,
+    subcategory: 'Small Repair Tools',
+    shortDescription: 'A precision-tool starter listing for careful adjustment and small device repair tasks.',
+    attributes: {
+      care_type: 'Small device repair',
+    },
+    applications: ['Small device repair', 'Precision adjustment'],
+    tags: ['device-care-utility', 'precision-screwdriver', 'repair-tool'],
+  }),
+]
