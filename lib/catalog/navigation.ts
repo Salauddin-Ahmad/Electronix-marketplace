@@ -1,6 +1,6 @@
-import { gadgetSourceCategories, gadgetSourceCategoryNames } from '@/lib/catalog/gadget-seed-data'
+import { gadgetSourceCategories } from '@/lib/catalog/gadget-seed-data'
 
-export const navigationCategories = [
+const leafNavigationCategories = [
   {
     name: 'Electrical & Wiring',
     slug: 'electrical-wiring',
@@ -54,15 +54,6 @@ export const navigationCategories = [
     slug: 'home-solutions',
     sourceCategories: ['Enclosure & Small Hardware', 'CCTV & Low-Voltage Accessories', 'Electrical Consumables'],
     desc: 'Practical hardware and low-voltage home solutions.',
-  },
-  {
-    name: 'Gadgets',
-    slug: 'gadgets',
-    sourceCategories: gadgetSourceCategoryNames,
-    desc: 'Everyday gadgets, accessories, portable power and device care essentials.',
-    section: 'gadgets',
-    isHub: true,
-    navVisible: true,
   },
   {
     name: 'Mobile Accessories',
@@ -120,6 +111,42 @@ export const navigationCategories = [
   },
 ] as const
 
+// Hubs and navigation groups derive their membership from these leaf categories.
+export const electricalCategories = leafNavigationCategories.filter(
+  (category) => !('section' in category && category.section === 'gadgets'),
+)
+
+export const gadgetCategories = leafNavigationCategories.filter(
+  (category) => 'section' in category && category.section === 'gadgets',
+)
+
+const electricalHub = {
+  name: 'Electrical',
+  slug: 'electrical',
+  sourceCategories: [...new Set(electricalCategories.flatMap((category) => [...category.sourceCategories]))],
+  desc: 'Electrical supplies, electronics, tools and project essentials.',
+  section: 'electrical',
+  isHub: true,
+  navVisible: false,
+} as const
+
+const gadgetHub = {
+  name: 'Gadgets',
+  slug: 'gadgets',
+  sourceCategories: gadgetCategories.flatMap((category) => [...category.sourceCategories]),
+  desc: 'Everyday gadgets, accessories, portable power and device care essentials.',
+  section: 'gadgets',
+  isHub: true,
+  navVisible: true,
+} as const
+
+export const navigationCategories = [
+  ...electricalCategories,
+  electricalHub,
+  gadgetHub,
+  ...gadgetCategories,
+] as const
+
 export type NavigationCategory = (typeof navigationCategories)[number]
 export type NavigationCategorySlug = NavigationCategory['slug']
 
@@ -129,19 +156,10 @@ export const navigationLinks = navigationCategories
   .filter((category) => !('navVisible' in category) || category.navVisible)
   .map((category) => [category.name, `/category/${category.slug}`] as const)
 
-// Customer-facing catalogue groups. Keep these derived from the single category
-// map so the header never needs to maintain its own list of category slugs.
-export const electricalCategories = navigationCategories.filter(
-  (category) => !('section' in category && category.section === 'gadgets'),
-)
-
-export const gadgetCategories = navigationCategories.filter(
-  (category) => 'section' in category && category.section === 'gadgets' && !category.isHub,
-)
-
 export type CatalogueNavigationGroup = {
   id: 'electrical' | 'gadgets'
   label: string
+  href: string
   categories: readonly NavigationCategory[]
   viewAll?: {
     href: string
@@ -152,21 +170,33 @@ export type CatalogueNavigationGroup = {
 export const catalogueNavigationGroups: readonly CatalogueNavigationGroup[] = [
   {
     id: 'electrical',
-    label: 'Electrical',
+    label: electricalHub.name,
+    href: `/category/${electricalHub.slug}`,
     categories: electricalCategories,
+    viewAll: {
+      href: `/category/${electricalHub.slug}`,
+      label: 'View all Electrical',
+    },
   },
   {
     id: 'gadgets',
-    label: 'Gadgets',
+    label: gadgetHub.name,
+    href: `/category/${gadgetHub.slug}`,
     categories: gadgetCategories,
     viewAll: {
-      href: '/category/gadgets',
+      href: `/category/${gadgetHub.slug}`,
       label: 'View all Gadgets',
     },
   },
 ]
 
 export type CatalogueNavigationGroupId = CatalogueNavigationGroup['id']
+
+export function getCatalogueNavigationGroup(slug: string) {
+  return catalogueNavigationGroups.find((group) =>
+    group.id === slug || group.categories.some((category) => category.slug === slug),
+  )
+}
 
 export function isGadgetCategory(slug: string) {
   return gadgetCategories.some((category) => category.slug === slug)

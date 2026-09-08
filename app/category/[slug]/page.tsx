@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ActiveFilters } from '@/components/catalog/active-filters'
-import { CategoryCardGrid } from '@/components/catalog/category-card-grid'
+import { CategorySelector } from '@/components/catalog/category-selector'
 import { FilterSidebar } from '@/components/catalog/filter-sidebar'
 import { SortSelect } from '@/components/catalog/sort-select'
 import { ProductGrid } from '@/components/product-card'
@@ -10,7 +10,7 @@ import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { applyProductFilters, buildAvailableFacets, catalogUrl, paginateProducts, parseCatalogSearchParams, sortProducts, type RawCatalogSearchParams } from '@/lib/catalog-filter'
 import { getCategory, navigationCategories, productsByNavigationCategory } from '@/lib/data'
-import { gadgetCategories } from '@/lib/catalog/navigation'
+import { getCatalogueNavigationGroup } from '@/lib/catalog/navigation'
 import { absoluteUrl, canonicalMetadata } from '@/lib/seo'
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<RawCatalogSearchParams> }
@@ -44,14 +44,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   if (!category) notFound()
 
   const basePath = `/category/${slug}`
-  const isGadgetHub = 'isHub' in category && category.isHub
-  const gadgetCards = isGadgetHub
-    ? gadgetCategories.map((gadgetCategory) => ({
-      name: gadgetCategory.name,
-      href: `/category/${gadgetCategory.slug}`,
-      count: productsByNavigationCategory(gadgetCategory.slug).length,
-    }))
-    : []
+  const group = getCatalogueNavigationGroup(slug)
   const categoryProducts = productsByNavigationCategory(slug)
   const parsedParams = parseCatalogSearchParams(rawParams)
   const hasPricedProducts = categoryProducts.some((product) => product.pricing.sellingPrice !== null)
@@ -64,41 +57,26 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   return (
     <div>
       <SiteHeader />
-      <main id="main-content" className="container-shell py-10">
-        {isGadgetHub ? (
-          <nav aria-label="Breadcrumb" className="text-xs text-slate-500">
-            <Link href="/" className="hover:text-brand-600">Home</Link>
+      <main id="main-content" className="container-shell py-6 sm:py-8">
+        <nav aria-label="Breadcrumb" className="text-xs text-slate-500">
+          <Link href="/" className="hover:text-brand-600">Home</Link>
+          <span aria-hidden="true"> / </span>
+          {group && basePath !== group.href ? <>
+            <Link href={group.href} className="hover:text-brand-600">{group.label}</Link>
             <span aria-hidden="true"> / </span>
-            <span aria-current="page">Gadgets</span>
-          </nav>
-        ) : <Link href="/" className="text-xs text-slate-500">Home / Categories</Link>}
-        {isGadgetHub ? (
-          <div className="mt-5 border-b border-slate-200 pb-5">
-            <h1 className="font-display text-4xl font-bold">Gadgets</h1>
-            <p className="mt-1.5 text-sm text-slate-600">Everyday tech essentials and accessories.</p>
-          </div>
-        ) : (
-          <div className="mt-6 border-b border-slate-200 pb-6">
-            <div className="eyebrow">Category</div>
-            <h1 className="font-display mt-1 text-4xl font-bold">{category.name}</h1>
-            <p className="mt-2 text-sm text-slate-600">{category.desc}</p>
-          </div>
-        )}
+          </> : null}
+          <span aria-current="page">{category.name}</span>
+        </nav>
+        <div className="mt-4">
+          <h1 className="font-display text-3xl font-bold text-slate-950 sm:text-4xl">{category.name}</h1>
+          <p className="mt-1.5 text-sm text-slate-600">{category.desc}</p>
+        </div>
 
-        {isGadgetHub ? (
-          <section className="mt-5">
-            <CategoryCardGrid cards={gadgetCards} label="Gadget categories" />
-          </section>
-        ) : null}
+        <CategorySelector slug={slug} />
 
-        <div className={`mt-7 grid gap-6 ${facets.length ? 'lg:grid-cols-[260px_minmax(0,1fr)]' : ''}`}>
+        <div className={`mt-4 grid gap-6 ${facets.length ? 'lg:grid-cols-[260px_minmax(0,1fr)]' : ''}`}>
           <FilterSidebar facets={facets} params={catalogParams} basePath={basePath} />
           <section className="min-w-0" aria-label={`${category.name} products`}>
-            {isGadgetHub ? (
-              <div className="mb-4 border-b border-slate-200 pb-3">
-                <h2 className="font-display text-3xl font-bold text-slate-950">All Gadgets</h2>
-              </div>
-            ) : null}
             <SortSelect params={catalogParams} basePath={basePath} resultCount={pagination.total} hasPricedProducts={hasPricedProducts} />
             <ActiveFilters facets={facets} params={catalogParams} basePath={basePath} />
             <div className="mt-5">

@@ -17,6 +17,8 @@ export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const navigationRef = useRef<HTMLDivElement>(null);
+  const mobileToggleRef = useRef<HTMLButtonElement>(null);
+  const groupToggleRefs = useRef<Record<CatalogueNavigationGroupId, HTMLButtonElement | null>>({ electrical: null, gadgets: null });
   const [q, setQ] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeGroup, setActiveGroup] = useState<CatalogueNavigationGroupId | null>(null);
@@ -24,25 +26,30 @@ export function SiteHeader() {
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setActiveGroup(null);
-        setMobileOpen(false);
+        if (activeGroup) {
+          setActiveGroup(null);
+          groupToggleRefs.current[activeGroup]?.focus();
+        } else if (mobileOpen) {
+          setMobileOpen(false);
+          mobileToggleRef.current?.focus();
+        }
       }
     };
 
-    const closeOnOutsidePress = (event: MouseEvent) => {
+    const closeOnOutsidePress = (event: PointerEvent) => {
       if (event.target instanceof Node && !navigationRef.current?.contains(event.target)) {
         setActiveGroup(null);
       }
     };
 
     document.addEventListener('keydown', closeOnEscape);
-    document.addEventListener('mousedown', closeOnOutsidePress);
+    document.addEventListener('pointerdown', closeOnOutsidePress);
 
     return () => {
       document.removeEventListener('keydown', closeOnEscape);
-      document.removeEventListener('mousedown', closeOnOutsidePress);
+      document.removeEventListener('pointerdown', closeOnOutsidePress);
     };
-  }, []);
+  }, [activeGroup, mobileOpen]);
 
   const closeNavigation = () => {
     setActiveGroup(null);
@@ -93,7 +100,7 @@ export function SiteHeader() {
 
             <div className="ml-auto flex items-center gap-1">
               <Link href="/cart" aria-label="Quote list" className="icon-btn relative"><ShoppingCart size={20} />{count > 0 && <span className="absolute -right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-brand-500 px-1 text-[9px] font-extrabold text-white">{count}</span>}</Link>
-              <button type="button" onClick={toggleMobileNavigation} className="icon-btn md:hidden" aria-label="Toggle navigation" aria-expanded={mobileOpen} aria-controls="primary-navigation"><Menu size={21} /></button>
+              <button ref={mobileToggleRef} type="button" onClick={toggleMobileNavigation} className="icon-btn md:hidden" aria-label="Toggle navigation" aria-expanded={mobileOpen} aria-controls="primary-navigation"><Menu size={21} /></button>
             </div>
           </div>
 
@@ -112,26 +119,39 @@ export function SiteHeader() {
                 const isOpen = activeGroup === group.id;
                 const containsCurrentRoute = group.categories.some(
                   (category) => pathname === `/category/${category.slug}`,
-                ) || pathname === group.viewAll?.href;
+                ) || pathname === group.href;
 
                 return (
-                  <button
+                  <div
                     key={group.id}
-                    type="button"
-                    onClick={() => toggleGroup(group.id)}
-                    aria-expanded={isOpen}
-                    aria-controls={`catalogue-group-${group.id}`}
-                    className={`group flex w-full items-center justify-between gap-1 px-3 py-3 text-left text-sm font-bold transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#172033] md:w-auto md:justify-start md:text-xs xl:text-[13px] ${
+                    className={`flex items-center text-sm font-bold md:text-xs xl:text-[13px] ${
                       isOpen || containsCurrentRoute ? 'text-[#f6c90e]' : 'text-slate-300 hover:text-white'
                     }`}
                   >
-                    <span>{group.label}</span>
-                    <ChevronDown
-                      size={15}
-                      aria-hidden="true"
-                      className={`shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                    />
-                  </button>
+                    <Link
+                      href={group.href}
+                      onClick={closeNavigation}
+                      aria-current={pathname === group.href ? 'page' : undefined}
+                      className="flex min-h-11 flex-1 items-center pl-3 pr-2 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-300 md:flex-none"
+                    >
+                      {group.label}
+                    </Link>
+                    <button
+                      ref={(element) => { groupToggleRefs.current[group.id] = element; }}
+                      type="button"
+                      onClick={() => toggleGroup(group.id)}
+                      aria-label={`${group.label} categories`}
+                      aria-expanded={isOpen}
+                      aria-controls={`catalogue-group-${group.id}`}
+                      className="grid min-h-11 min-w-11 place-items-center transition-colors hover:bg-white/5 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-300"
+                    >
+                      <ChevronDown
+                        size={15}
+                        aria-hidden="true"
+                        className={`shrink-0 transition-transform duration-200 motion-reduce:transition-none ${isOpen ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                  </div>
                 );
               })}
             </nav>
@@ -146,13 +166,14 @@ export function SiteHeader() {
                 id={`catalogue-group-${group.id}`}
                 aria-label={`Browse ${group.label}`}
                 aria-hidden={!isOpen}
+                inert={!isOpen}
                 className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${
                   isOpen ? 'grid-rows-[1fr] opacity-100' : 'pointer-events-none grid-rows-[0fr] opacity-0'
                 }`}
               >
                 <div className="min-h-0 overflow-hidden">
                   <div className="border-t border-white/10 bg-[#111827]">
-                    <div className="container-shell py-3">
+                    <div className="container-shell max-h-[60dvh] overflow-y-auto overscroll-contain py-3">
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {group.categories.map((category) => {
                           const href = `/category/${category.slug}`;
@@ -175,7 +196,7 @@ export function SiteHeader() {
                               <ChevronRight
                                 size={16}
                                 aria-hidden="true"
-                                className="shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-slate-200"
+                                className="shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-slate-200 motion-reduce:transform-none motion-reduce:transition-none"
                               />
                             </Link>
                           );
@@ -193,7 +214,7 @@ export function SiteHeader() {
                             <ChevronRight
                               size={16}
                               aria-hidden="true"
-                              className="shrink-0 transition-transform duration-200 group-hover:translate-x-0.5"
+                              className="shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none"
                             />
                           </Link>
                         )}
